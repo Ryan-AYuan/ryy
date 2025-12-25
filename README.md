@@ -1,2 +1,0 @@
-# ryy
-ryy's memory
