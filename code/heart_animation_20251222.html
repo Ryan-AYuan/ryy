@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>愛心彈窗動畫</title>
+    <!-- 绕过ngrok安全警告 -->
+    <meta name="ngrok-skip-browser-warning" content="true">
+    <!-- 引入 canvas-confetti 庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        // 设置自定义User-Agent来绕过ngrok警告
+        if (navigator.userAgent.includes("ngrok")) {
+            // 已经通过ngrok访问，正常显示
+        }
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(120deg, #fccb90 0%, #d57eeb 100%);
+            font-family: 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .bg-particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 魔法滑鼠拖尾 Canvas */
+        #trail-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50; /* 在背景之上，彈窗之下 */
+        }
+
+        @keyframes float {
+            0% { transform: translateY(110vh) scale(0) rotate(0deg); opacity: 0; }
+            20% { opacity: 0.6; transform: translateY(90vh) scale(1) rotate(45deg); }
+            100% { transform: translateY(-10vh) scale(0.5) rotate(360deg); opacity: 0; }
+        }
+        
+        .heart-popup {
+            position: absolute;
+            width: 120px;
+            height: 60px;
+            background: rgba(255, 107, 107, 0.25);
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 32px rgba(255, 107, 107, 0.2);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            opacity: 0;
+            transform: scale(0.3);
+            animation: popupAnimation 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .heart-popup:hover {
+            /* transform 由 JS 的 3D Tilt 控制，這裡移除 scale */
+            z-index: 9999 !important;
+            background: rgba(255, 107, 107, 0.9);
+            box-shadow: 0 15px 45px rgba(255, 107, 107, 0.6);
+            border: 2px solid #fff;
+        }
+        
+        .heart-popup.special {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            width: 200px;
+            height: 100px;
+            box-shadow: 0 12px 40px rgba(255, 107, 107, 0.4);
+            line-height: 1.4;
+            text-align: center;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 手機端適配 */
+        @media (max-width: 768px) {
+            .heart-popup {
+                width: 80px;
+                height: 40px;
+                font-size: 10px;
+                border-radius: 10px;
+            }
+            .heart-popup.special {
+                width: 160px;
+                height: 80px;
+                font-size: 14px;
+            }
+            .title {
+                font-size: 28px;
+            }
+        }
+
+        /* 心跳動畫 */
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .heart-popup.beating {
+            animation: heartbeat 1.5s ease-in-out infinite !important;
+            opacity: 1 !important;
+        }
+
+        /* 點擊爆破效果 */
+        @keyframes popEffect {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.8; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        .heart-popup.popping {
+            animation: popEffect 0.3s ease-out forwards !important;
+            pointer-events: none;
+        }
+        
+        @keyframes popupAnimation {
+            0% {
+                opacity: 0;
+                transform: scale(0.3) translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        @keyframes specialPopupAnimation {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.3) translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1) translateY(0);
+            }
+        }
+
+        /* 特殊彈窗的心跳動畫 */
+        @keyframes specialHeartbeat {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .start-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        
+        .start-button:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.4);
+        }
+        
+        .title {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 42px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+        }
+        
+        .countdown {
+            position: absolute;
+            top: 70%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 20px;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .controls.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .control-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-weight: bold;
+        }
+        
+        .btn-restart {
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4);
+        }
+        
+        .btn-close {
+            background: linear-gradient(45deg, #a18cd1, #fbc2eb);
+        }
+        
+        .control-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">❤ 萤萤专属 ❤</div>
+        <button class="start-button" onclick="startAnimation()">宝宝,香蕉猎人很想你!</button>
+        <div class="countdown" id="countdown"></div>
+        <div class="controls" id="controls">
+            <button class="control-btn btn-restart" onclick="restartAnimation()">再看一次</button>
+            <button class="control-btn btn-close" onclick="closeAnimation()">关闭动画</button>
+        </div>
+    </div>
+
+    <!-- 魔法滑鼠拖尾 Canvas -->
+    <canvas id="trail-canvas"></canvas>
+
+    <script>
+        // 提示語列表
+        const tips = [
+            "笨蛋，我又开始想你了",
+            "嘴角上扬才是我的宝，要保持微笑哦",
+            "每天都要元气满满",
+            "熬夜会偷走红脸蛋，乖乖早点睡",
+            "吃的饱饱，不长肉肉",
+            "每天都要开开心心的",
+            "想你的每一天，都在盼着快点见到你",
+            "希望你在忙的时候也要记得能够想起我",
+            "照顾好自己",
+            "受了委屈你可以选择告诉我，我的怀抱永远为你敞开",
+            "你是我限量典藏版的小可爱",
+            "就算世界很复杂，我也会把所有的温柔都留给你",
+            "做你自己就好，我会一直爱你",
+        ];
+        
+        // 浪漫色票庫
+        const colors = [
+            'rgba(255, 182, 193, 0.5)', // 淺粉
+            'rgba(255, 160, 122, 0.5)', // 淺珊瑚
+            'rgba(221, 160, 221, 0.5)', // 梅紅
+            'rgba(255, 105, 180, 0.5)', // 熱粉
+            'rgba(255, 107, 107, 0.5)', // 原色
+            'rgba(240, 128, 128, 0.5)'  // 淡珊瑚
+        ];
+
+        // 生成愛心形狀的坐標點
+        function generateHeartPoints(numPoints, screenWidth, screenHeight) {
+            const points = [];
+            const centerX = screenWidth / 2;
+            const centerY = screenHeight / 2;
+            
+            // 普通愛心點 (保留最後一個位置給特殊彈窗)
+            for (let i = 0; i < numPoints - 1; i++) {
+                const t = (i / (numPoints - 1)) * 2 * Math.PI;
+                let x = 16 * Math.pow(Math.sin(t), 3);
+                let y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+                
+                // 縮放和平移
+                const scale = Math.min(screenWidth / 40, screenHeight / 40);
+                x = centerX + x * scale;
+                y = centerY + y * scale;
+                
+                // 確保在屏幕範圍內
+                x = Math.max(60, Math.min(x, screenWidth - 60));
+                y = Math.max(30, Math.min(y, screenHeight - 30));
+                
+                points.push({ x: Math.round(x), y: Math.round(y) });
+            }
+
+            // 添加最後一個特殊點在中心
+            points.push({ x: centerX, y: centerY });
+            
+            return points;
+        }
+        
+        // 創建彈窗
+        function createPopup(x, y, text, isSpecial = false, index = 0) {
+            const popup = document.createElement('div');
+            popup.className = isSpecial ? 'heart-popup special' : 'heart-popup';
+            
+            // 隨機顏色（僅對普通彈窗）
+            if (!isSpecial) {
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                popup.style.background = randomColor;
+            }
+
+            if (isSpecial) {
+                // 特殊彈窗居中定位
+                popup.style.left = '50%';
+                popup.style.top = '50%';
+                popup.style.transform = 'translate(-50%, -50%) scale(0.3)';
+            } else {
+                // 普通彈窗定位
+                popup.style.left = (x - 60) + 'px';
+                popup.style.top = (y - 30) + 'px';
+            }
+            
+            // 特殊彈窗先不設置文字，等待打字機效果
+            if (!isSpecial) {
+                popup.textContent = text;
+            }
+            
+            // 根據類型設置不同的動畫
+            if (isSpecial) {
+                popup.style.animation = 'specialPopupAnimation 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+            } else {
+                popup.style.animation = 'popupAnimation 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+            }
+            
+            popup.style.zIndex = 50 + index; // 設置不同的z-index避免覆蓋
+            
+            // 點擊爆破效果
+            popup.addEventListener('click', function(e) {
+                if (!isSpecial && !popup.classList.contains('popping')) {
+                    e.stopPropagation(); // 防止冒泡
+                    popup.classList.add('popping');
+                    setTimeout(() => {
+                        popup.remove();
+                    }, 300);
+                }
+            });
+
+            document.body.appendChild(popup);
+            return popup;
+        }
+        
+        // 打字機效果函數
+        function typeWriter(element, text, speed = 100) {
+            let i = 0;
+            element.textContent = '';
+            return new Promise(resolve => {
+                function type() {
+                    if (i < text.length) {
+                        element.textContent += text.charAt(i);
+                        i++;
+                        setTimeout(type, speed);
+                    } else {
+                        resolve();
+                    }
+                }
+                type();
+            });
+        }
+
+        // 開始動畫
+        async function startAnimation() {
+            // 隱藏開始按鈕
+            const button = document.querySelector('.start-button');
+            const title = document.querySelector('.title');
+            button.style.display = 'none';
+            title.style.display = 'none';
+            
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+            const numPoints = 100;
+            
+            const points = generateHeartPoints(numPoints, screenWidth, screenHeight);
+            const popups = [];
+            
+            // 依序創建彈窗
+            for (let i = 0; i < points.length; i++) {
+                const point = points[i];
+                let text;
+                let isSpecial = false;
+                
+                if (i === points.length - 1) {
+                    // 最後一個顯示特殊訊息
+                    text = "🌟 愿世间所有美好，\n都与萤萤环环相扣 ❤";
+                    isSpecial = true;
+                } else {
+                    text = tips[Math.floor(Math.random() * tips.length)];
+                }
+                
+                const popup = createPopup(point.x, point.y, text, isSpecial, i);
+                popups.push(popup);
+                
+                if (isSpecial) {
+                    // 特殊彈窗打字機效果
+                    await typeWriter(popup, text, 150);
+                    
+                    // 綻放慶祝特效 (Confetti Explosion)
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#ff6b6b', '#ff8e8e', '#fccb90', '#d57eeb', '#ffffff'],
+                        shapes: ['circle', 'heart'] // 如果庫支持 heart 形狀
+                    });
+                    
+                    // 再來一波
+                    setTimeout(() => {
+                         confetti({
+                            particleCount: 100,
+                            angle: 60,
+                            spread: 55,
+                            origin: { x: 0 },
+                            colors: ['#ff6b6b', '#ff8e8e']
+                        });
+                        confetti({
+                            particleCount: 100,
+                            angle: 120,
+                            spread: 55,
+                            origin: { x: 1 },
+                            colors: ['#d57eeb', '#fccb90']
+                        });
+                    }, 500);
+                }
+
+                // 延遲創建下一個彈窗
+                await new Promise(resolve => setTimeout(resolve, 60));
+            }
+            
+            // 動畫結束，所有彈窗開始心跳
+            popups.forEach(popup => {
+                // 特殊彈窗的心跳需要保留 translate(-50%, -50%)
+                if (popup.classList.contains('special')) {
+                     // 特殊彈窗單獨定義心跳動畫
+                     popup.style.animation = 'specialHeartbeat 1.5s ease-in-out infinite';
+                     popup.style.opacity = '1';
+                } else {
+                    popup.classList.add('beating');
+                }
+            });
+
+            // 動畫結束，顯示控制按鈕
+            const controls = document.getElementById('controls');
+            controls.className = 'controls show';
+            
+            // 清空倒計時文字（如果有的話）
+            document.getElementById('countdown').textContent = '';
+        }
+        
+        // 清除所有彈窗
+        function clearPopups() {
+            const popups = document.querySelectorAll('.heart-popup');
+            popups.forEach(popup => popup.remove());
+            document.getElementById('controls').className = 'controls';
+        }
+
+        // 重新開始
+        function restartAnimation() {
+            clearPopups();
+            startAnimation();
+        }
+
+        // 關閉動畫
+        function closeAnimation() {
+            // 先反向動畫消失
+            const popups = document.querySelectorAll('.heart-popup');
+            popups.forEach((popup, index) => {
+                popup.style.animation = 'popupAnimation 0.5s ease-in reverse forwards';
+            });
+
+            // 隱藏控制按鈕
+            document.getElementById('controls').className = 'controls';
+
+            setTimeout(() => {
+                clearPopups();
+                // 顯示標題和開始按鈕
+                document.querySelector('.start-button').style.display = 'block';
+                document.querySelector('.title').style.display = 'block';
+            }, 600);
+        }
+        
+        // 頁面載入完成後的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 生成背景粒子
+            const body = document.body;
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'bg-particle';
+                const size = Math.random() * 15 + 5;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                particle.style.animationDelay = (Math.random() * 10) + 's';
+                particle.style.animationName = 'float';
+                particle.style.animationTimingFunction = 'linear';
+                particle.style.animationIterationCount = 'infinite';
+                body.appendChild(particle);
+            }
+            console.log('愛心動畫已準備就绪！');
+            
+            // 初始化魔法滑鼠拖尾
+            initMouseTrail();
+        });
+
+        // 魔法滑鼠拖尾邏輯
+        function initMouseTrail() {
+            const canvas = document.getElementById('trail-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            
+            class Particle {
+                constructor(x, y) {
+                    this.x = x;
+                    this.y = y;
+                    this.size = Math.random() * 5 + 2;
+                    this.speedX = Math.random() * 2 - 1;
+                    this.speedY = Math.random() * 2 - 1;
+                    this.color = `hsl(${Math.random() * 60 + 330}, 100%, 75%)`; // 粉紅到紫色的色調
+                    this.life = 1;
+                }
+                update() {
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    this.life -= 0.02;
+                    if (this.life < 0) this.life = 0;
+                    this.size *= 0.95;
+                }
+                draw() {
+                    ctx.fillStyle = this.color;
+                    ctx.globalAlpha = this.life;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // 添加閃光效果
+                    ctx.fillStyle = 'white';
+                    ctx.globalAlpha = this.life * 0.5;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            function handleParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].update();
+                    particles[i].draw();
+                    if (particles[i].life <= 0 || particles[i].size <= 0.1) {
+                        particles.splice(i, 1);
+                        i--;
+                    }
+                }
+                requestAnimationFrame(handleParticles);
+            }
+            handleParticles();
+            
+            window.addEventListener('mousemove', (e) => {
+                // 移動時生成粒子
+                for(let i=0; i<2; i++){
+                    particles.push(new Particle(e.x, e.y));
+                }
+            });
+        }
+    </script>
+</body>
+</html>

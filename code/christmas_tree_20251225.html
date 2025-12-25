@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golden 3D Star Christmas Tree</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            /* Deep night sky gradient */
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+            position: relative;
+            z-index: 1;
+        }
+        .message {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            text-align: center;
+            color: #ffd700;
+            font-family: 'Mountains of Christmas', cursive;
+            font-size: 64px;
+            text-shadow: 0 0 10px #ff8c00, 0 0 20px #ff0000;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0.9;
+            animation: glow 3s infinite ease-in-out;
+            letter-spacing: 2px;
+        }
+
+        @keyframes glow {
+            0% { text-shadow: 0 0 10px #ff8c00, 0 0 20px #ff0000; transform: scale(1); }
+            50% { text-shadow: 0 0 20px #ff8c00, 0 0 30px #ff0000, 0 0 40px #ffd700; transform: scale(1.05); }
+            100% { text-shadow: 0 0 10px #ff8c00, 0 0 20px #ff0000; transform: scale(1); }
+        }
+
+        #landing {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            transition: opacity 1s ease-out;
+        }
+
+        #startBtn {
+            padding: 20px 40px;
+            font-size: 32px;
+            font-family: 'Mountains of Christmas', cursive;
+            color: #1b2735;
+            background: linear-gradient(to bottom, #ffd700, #ff8c00);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 20px #ffd700, 0 0 40px #ff8c00;
+            transition: all 0.3s ease;
+            outline: none;
+            animation: pulseBtn 2s infinite;
+        }
+
+        #startBtn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px #ffd700, 0 0 60px #ff8c00;
+        }
+
+        @keyframes pulseBtn {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Initially hide the message and canvas, or we can just cover them with landing. 
+           But let's hide the message to be safe. Canvas is transparent so it's fine. */
+        .message {
+            opacity: 0; 
+            transition: opacity 2s ease-in;
+        }
+        
+        .message.show {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div id="landing">
+        <button id="startBtn">💗 2025 Ryy's Christmas Tree 🎄</button>
+    </div>
+    <div class="message" id="message">Merry Christmas</div>
+    <canvas id="treeCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('treeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let stars = [];
+        let snowParticles = [];
+        let bgStars = []; // Distant background stars
+        let shootingStars = [];
+        let angleOffset = 0;
+        let rotationSpeed = 0.005;
+        let isDragging = false;
+        let lastMouseX = 0;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initTree();
+            initSnow();
+            initBgStars();
+            initShootingStars();
+        }
+        window.addEventListener('resize', resize);
+
+        // Mouse Interaction
+        window.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouseX = e.clientX;
+        });
+        window.addEventListener('mouseup', () => isDragging = false);
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                let delta = e.clientX - lastMouseX;
+                angleOffset += delta * 0.005;
+                lastMouseX = e.clientX;
+                rotationSpeed = delta * 0.001; // Momentum
+            } else {
+                // Interactive tilt based on mouse position
+                let mouseXRatio = (e.clientX / width) - 0.5;
+                rotationSpeed = 0.005 + mouseXRatio * 0.02; 
+            }
+        });
+        // Touch support
+        window.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            lastMouseX = e.touches[0].clientX;
+        });
+        window.addEventListener('touchend', () => isDragging = false);
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                let delta = e.touches[0].clientX - lastMouseX;
+                angleOffset += delta * 0.005;
+                lastMouseX = e.touches[0].clientX;
+                rotationSpeed = delta * 0.001;
+            }
+        });
+
+        class ShootingStar {
+            constructor() {
+                this.reset();
+            }
+            
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height * 0.5; // Top half
+                this.length = Math.random() * 80 + 10;
+                this.speed = Math.random() * 10 + 5;
+                this.size = Math.random() * 2 + 0.1;
+                this.angle = Math.PI / 4 + (Math.random() - 0.5) * 0.5; // ~45 degrees
+                this.opacity = 0;
+                this.active = false;
+                this.waitTime = Math.random() * 100; // Reduced delay
+            }
+
+            update() {
+                if (this.waitTime > 0) {
+                    this.waitTime--;
+                    if (this.waitTime <= 0) {
+                        this.active = true;
+                        this.opacity = 1;
+                    }
+                    return;
+                }
+
+                if (!this.active) return;
+
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
+                this.opacity -= 0.01;
+
+                if (this.x > width || this.y > height || this.opacity <= 0) {
+                    this.reset();
+                    this.waitTime = Math.random() * 200 + 50; // Significantly reduced wait time for frequent stars
+                }
+            }
+
+            draw(ctx) {
+                if (!this.active || this.waitTime > 0) return;
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                
+                let gradient = ctx.createLinearGradient(0, 0, this.length, 0);
+                gradient.addColorStop(0, `rgba(255, 255, 255, ${this.opacity})`);
+                gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.rect(0, -this.size/2, this.length, this.size);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        class Star {
+            constructor(y, angle, radius, size, color) {
+                this.y = y; // Vertical position
+                this.angle = angle; // Initial angle
+                this.radius = radius; // Distance from center
+                this.size = size;
+                this.color = color;
+                this.blinkSpeed = Math.random() * 0.05 + 0.01;
+                this.blinkOffset = Math.random() * Math.PI * 2;
+            }
+
+            draw(ctx, centerX, centerY, rotationY) {
+                // 3D Rotation around Y axis
+                let effectiveAngle = this.angle + rotationY;
+                let x = Math.cos(effectiveAngle) * this.radius;
+                let z = Math.sin(effectiveAngle) * this.radius;
+                
+                // Perspective projection
+                let fov = 400;
+                let scale = fov / (fov + z);
+                
+                if (scale < 0) return; // Behind camera (shouldn't happen with this setup usually)
+
+                let screenX = centerX + x * scale;
+                // Center the tree vertically on the screen
+                // Move up slightly by subtracting from Y (this.y - 30)
+                let screenY = centerY + (this.y - 70) * scale; 
+                let screenSize = this.size * scale;
+
+                // Blinking effect
+                let alpha = 0.6 + 0.4 * Math.sin(Date.now() * 0.003 + this.blinkOffset);
+                
+                ctx.save();
+                ctx.translate(screenX, screenY);
+                ctx.scale(scale, scale);
+                // Rotate star itself slightly for dynamism
+                ctx.rotate(effectiveAngle * 0.5); 
+                
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.fillStyle = `rgba(${this.hexToRgb(this.color)}, ${alpha})`;
+                
+                this.drawStarPath(ctx, 0, 0, 5, this.size, this.size / 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            drawStarPath(ctx, x, y, spikes, outerRadius, innerRadius) {
+                let rot = Math.PI / 2 * 3;
+                let cx = x;
+                let cy = y;
+                let step = Math.PI / spikes;
+
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - outerRadius);
+                for (let i = 0; i < spikes; i++) {
+                    x = cx + Math.cos(rot) * outerRadius;
+                    y = cy + Math.sin(rot) * outerRadius;
+                    ctx.lineTo(x, y);
+                    rot += step;
+
+                    x = cx + Math.cos(rot) * innerRadius;
+                    y = cy + Math.sin(rot) * innerRadius;
+                    ctx.lineTo(x, y);
+                    rot += step;
+                }
+                ctx.lineTo(cx, cy - outerRadius);
+                ctx.closePath();
+            }
+
+            hexToRgb(hex) {
+                // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+                var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+                hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+                    return r + r + g + g + b + b;
+                });
+
+                var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '255, 255, 255';
+            }
+        }
+
+        class Snowflake {
+            constructor() {
+                this.reset();
+                this.y = Math.random() * height; // Initial random y
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = -10;
+                this.size = Math.random() * 3 + 1;
+                this.speed = Math.random() * 1 + 0.5;
+                this.opacity = Math.random() * 0.5 + 0.3;
+                this.drift = Math.random() * 2 - 1;
+            }
+
+            update() {
+                this.y += this.speed;
+                this.x += Math.sin(this.y * 0.01) * 0.5 + this.drift * 0.1;
+
+                if (this.y > height) {
+                    this.reset();
+                }
+            }
+
+            draw(ctx) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initTree() {
+            stars = [];
+            let starCount = 1200; // Reduced from 2500 based on user feedback
+            let treeHeight = 500;
+            let maxRadius = 250;
+            
+            // Colors from gold to warm white
+            const colors = ['#FFD700', '#FFA500', '#FFFACD', '#FF8C00', '#F0E68C'];
+
+            for (let i = 0; i < starCount; i++) {
+                // Use Math.pow or sqrt to distribute more stars towards the bottom (p=1)
+                // Linear: p = i / starCount
+                // Sqrt: p = Math.sqrt(i / starCount) -> pushes values towards 1
+                let p = Math.pow(i / starCount, 0.5); // 0 to 1, biased towards 1
+                
+                let y = -treeHeight/2 + p * treeHeight;
+                
+                // Cone shape: radius decreases as we go up (y decreases)
+                // y goes from -250 (top) to 250 (bottom)
+                // We want radius 0 at top (-250), max at bottom (250)
+                let level = (y + treeHeight/2) / treeHeight; // 0 (top) to 1 (bottom)
+                let radius = maxRadius * level;
+                
+                // Spiral angle
+                // Adjust angle multiplier to maintain spiral definition with more stars
+                let angle = i * 0.1; 
+                
+                // Add some randomness to radius for "fluffy" look
+                radius += (Math.random() - 0.5) * 30;
+                
+                let size = 3 + Math.random() * 5;
+                if (Math.random() < 0.05) size *= 2.5; // Occasional big stars
+                
+                let color = colors[Math.floor(Math.random() * colors.length)];
+                
+                stars.push(new Star(y, angle, radius, size, color));
+            }
+            
+            // Add a big star on top
+            // Top is at y = -treeHeight/2
+            stars.push(new Star(-treeHeight/2 - 20, 0, 0, 25, '#FFFFFF'));
+            stars.push(new Star(-treeHeight/2 - 20, 0, 0, 15, '#FFD700'));
+        }
+
+        function initSnow() {
+            snowParticles = [];
+            for(let i=0; i<200; i++) {
+                snowParticles.push(new Snowflake());
+            }
+        }
+
+        function initBgStars() {
+            bgStars = [];
+            for(let i=0; i<100; i++) {
+                bgStars.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    size: Math.random() * 1.5,
+                    opacity: Math.random() * 0.8 + 0.2
+                });
+            }
+        }
+
+        function initShootingStars() {
+            shootingStars = [];
+            for(let i=0; i<6; i++) { // Increased number of shooting stars
+                 shootingStars.push(new ShootingStar());
+            }
+        }
+
+        function drawBgStars(ctx) {
+            ctx.fillStyle = '#FFF';
+            bgStars.forEach(star => {
+                ctx.globalAlpha = star.opacity * (0.5 + 0.5 * Math.sin(Date.now() * 0.001 + star.x)); // Twinkle
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        function animate() {
+            if (!animationRunning) return; // Stop if not running
+
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw background stars first
+            drawBgStars(ctx);
+
+            // Draw Shooting Stars
+            shootingStars.forEach(star => {
+                star.update();
+                star.draw(ctx);
+            });
+
+            // Update rotation
+            if (!isDragging) {
+                // Friction to return to base speed? Or just keep it?
+                // Let's keep the interactive speed but decay slightly if it was flung
+                // Actually, just let the mouseMove handler set the speed.
+            }
+            angleOffset += rotationSpeed;
+            
+            // Sort stars by Z depth (furthest first) for correct occlusion
+            stars.sort((a, b) => {
+                let za = Math.sin(a.angle + angleOffset) * a.radius;
+                let zb = Math.sin(b.angle + angleOffset) * b.radius;
+                return za - zb; // Draw small z (far) first
+            });
+
+            stars.forEach(star => {
+                star.draw(ctx, width / 2, height / 2, angleOffset);
+            });
+
+            // Draw snow on top
+            snowParticles.forEach(flake => {
+                flake.update();
+                flake.draw(ctx);
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        let animationRunning = false;
+
+        // Initial setup but don't start loop yet
+        resize(); 
+
+        const startBtn = document.getElementById('startBtn');
+        const landing = document.getElementById('landing');
+        const message = document.getElementById('message');
+
+        startBtn.addEventListener('click', () => {
+            landing.classList.add('hidden');
+            setTimeout(() => {
+                landing.style.display = 'none';
+            }, 1000);
+
+            animationRunning = true;
+            animate();
+
+            // Fade in message
+            setTimeout(() => {
+                message.classList.add('show');
+            }, 500);
+        });
+
+    </script>
+</body>
+</html>
