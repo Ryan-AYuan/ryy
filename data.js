@@ -21,13 +21,11 @@ const siteData = {
             ]
         },
         "2025": {
-            "February": [
-                { src: "photo/2025/02/1.jpg", caption: "Feb 2025 - Moment 1" },
-                { src: "photo/2025/02/2.png", caption: "Feb 2025 - Moment 2" }
+            "December": [
+                { src: "photo/2025/12/1.jpg", caption: "Dec 2025 - Moment 1" },
+                { src: "photo/2025/12/2.png", caption: "Dec 2025 - Moment 2" }
             ],
-            "January": [
-                { src: "photo/2025/01/1.jpg", caption: "Jan 2025 - Moment 1" }
-            ]
+            
         }
     },
     music: [
