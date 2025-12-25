@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ryy's Creative Space</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+TC:wght@300;400;700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ff99ac; /* Soft Pink */
+            --secondary-color: #b39ddb; /* Soft Lavender */
+            --dark-bg: #fff0f5; /* Lavender Blush (Light BG) */
+            --card-bg: #ffffff; /* White Card */
+            --text-color: #ff6b81; 
+            --light-text: #666666; /* Dark Grey for body text */
+        }
+
+        body {
+            font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: var(--light-text);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #fff0f5 0%, #ffe6eb 100%);
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(255, 153, 172, 0.15);
+        }
+
+        h1 {
+            margin: 0;
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 3rem;
+            color: var(--primary-color);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 300;
+            margin-top: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        /* Anniversary Timer */
+        .timer-container {
+            margin-top: 1.5rem;
+            text-align: center;
+            color: var(--light-text);
+            font-weight: 300;
+        }
+        
+        .timer-title {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .timer-display {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            font-size: 1.2rem;
+            flex-wrap: wrap;
+        }
+
+        .timer-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 60px;
+        }
+
+        .timer-val {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .timer-label {
+            font-size: 0.7rem;
+            color: #888;
+            margin-top: 0.2rem;
+            text-transform: uppercase;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        section {
+            margin-bottom: 4rem;
+        }
+
+        h2 {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 2rem;
+            display: inline-block;
+            color: var(--secondary-color);
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 2rem;
+            letter-spacing: 1px;
+        }
+
+        /* Projects Grid */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .project-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            border: 1px solid rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 1;
+        }
+
+        .project-card:hover {
+            transform: translateY(-15px) scale(1.08) rotate(1deg);
+            box-shadow: 0 25px 50px rgba(255, 153, 172, 0.5);
+            border-color: var(--primary-color);
+            background-color: #fffbfd;
+            z-index: 10;
+        }
+
+        .project-content {
+            padding: 1.5rem;
+        }
+
+        .project-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .project-date {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 1rem;
+        }
+
+        .project-desc {
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        /* Animation Classes */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Ensure hover overrides the visible state transform */
+        .project-card.visible:hover {
+            transform: translateY(-15px) scale(1.08) rotate(1deg);
+        }
+
+        /* Gallery Grid */
+        .year-section {
+            margin-bottom: 2rem;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .year-title {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+            margin: 0;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            user-select: none;
+        }
+
+        .year-title:hover {
+            background-color: #fff5f7;
+        }
+        
+        /* Arrow icon */
+        .year-title::before {
+            content: '▼';
+            font-size: 0.8em;
+            margin-right: 1rem;
+            transition: transform 0.3s ease;
+            color: var(--primary-color);
+            transform: rotate(-90deg); /* Default collapsed state */
+        }
+
+        .year-section.active .year-title::before {
+            transform: rotate(0deg); /* Active/Open state */
+        }
+        
+        .year-title::after {
+            content: '';
+            flex-grow: 1;
+            height: 1px;
+            background: rgba(0,0,0,0.05);
+            margin-left: 1rem;
+        }
+
+        .year-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .year-section.active .year-content {
+            /* max-height will be set by JS */
+            opacity: 1;
+        }
+
+        /* Month Styles */
+        .month-section {
+            margin: 1rem 1.5rem;
+            border-left: 2px solid rgba(0,0,0,0.05);
+        }
+
+        .month-title {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+            margin: 0;
+            padding: 0.8rem 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            opacity: 0.9;
+        }
+
+        .month-title:hover {
+            color: var(--primary-color);
+        }
+
+        .month-title::before {
+            content: '▼';
+            font-size: 0.7em;
+            margin-right: 0.8rem;
+            transition: transform 0.3s ease;
+            transform: rotate(-90deg);
+        }
+
+        .month-section.active .month-title::before {
+            transform: rotate(0deg);
+        }
+
+        .month-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            opacity: 0;
+        }
+
+        .month-section.active .month-content {
+            opacity: 1;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            padding: 0 1.5rem 1.5rem 1.5rem;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 3/4;
+            background-color: #f8f8f8;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.02);
+            z-index: 10;
+        }
+
+        .gallery-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s ease;
+        }
+        
+        .gallery-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 0.5rem;
+            text-align: center;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover .gallery-caption {
+            transform: translateY(0);
+        }
+
+        /* Music Player */
+        .music-player {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .music-player:hover {
+            transform: scale(1.1) rotate(10deg);
+        }
+
+        .music-player.playing {
+            animation: pulse 2s infinite;
+        }
+
+        .music-info {
+            position: absolute;
+            right: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .music-player:hover .music-info {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 107, 107, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+        }
+
+        /* Stats in Footer */
+        .stats-container {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            opacity: 0.8;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background-color: #fff0f5;
+            color: #888;
+            margin-top: auto;
+        }
+
+        /* Lightbox */
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden; /* Added visibility for better control */
+            pointer-events: none;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .lightbox.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .lightbox-content {
+            max-width: 90%;
+            max-height: 80vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border-radius: 4px;
+            cursor: zoom-in;
+            transition: transform 0.3s ease;
+        }
+
+        .lightbox-content.grabbing {
+            cursor: grabbing;
+            transition: none;
+        }
+
+        #lightboxCaption {
+            position: absolute;
+            bottom: 5%;
+            color: #fff;
+            text-align: center;
+            width: 100%;
+            font-size: 1.1rem;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            z-index: 2001;
+        }
+
+        .lightbox-close:hover,
+        .lightbox-close:focus {
+            color: var(--primary-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.3);
+            color: white;
+            border: none;
+            padding: 1rem 0.8rem;
+            cursor: pointer;
+            font-size: 2rem;
+            z-index: 2002;
+            transition: all 0.3s ease;
+            user-select: none;
+            border-radius: 4px;
+        }
+
+        .lightbox-nav:hover {
+            background: var(--primary-color);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .lightbox-prev { left: 20px; }
+        .lightbox-next { right: 20px; }
+
+        /* Lock Screen */
+        #lock-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #fff0f5 0%, #ffe6eb 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+
+        #lock-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .lock-content {
+            text-align: center;
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(255, 153, 172, 0.3);
+            width: 90%;
+            max-width: 400px;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .lock-title {
+            color: var(--primary-color);
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 400;
+            font-family: 'Ma Shan Zheng', cursive;
+            letter-spacing: 2px;
+        }
+        
+        .lock-subtitle {
+            color: #888;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            font-family: 'Ma Shan Zheng', cursive;
+            letter-spacing: 1px;
+        }
+
+        .lock-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            outline: none;
+            transition: all 0.3s;
+            box-sizing: border-box;
+            text-align: center;
+            letter-spacing: 2px;
+            color: var(--light-text);
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+
+        .lock-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 153, 172, 0.2);
+        }
+        
+        .lock-input::placeholder {
+            color: #ccc;
+            letter-spacing: normal;
+        }
+
+        .lock-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 100%;
+            font-weight: 400;
+            box-shadow: 0 5px 15px rgba(255, 153, 172, 0.4);
+            font-family: 'Ma Shan Zheng', cursive;
+            letter-spacing: 3px;
+        }
+
+        .lock-btn:hover {
+            background: #ff7e96;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(255, 153, 172, 0.5);
+        }
+        
+        .lock-btn:active {
+            transform: translateY(1px);
+        }
+
+        .lock-error {
+            color: #ff4757;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            min-height: 1.5em;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-family: 'Ma Shan Zheng', cursive;
+            letter-spacing: 1px;
+        }
+        
+        .lock-error.show {
+            opacity: 1;
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* Responsive */
+        /* Background Canvas */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div id="lock-screen">
+        <div class="lock-content">
+            <div class="lock-title">💜即将进入回忆空间💜</div>
+            <div class="lock-subtitle">💗是否还记得我们的周年纪念日?💗</div>
+            <input type="text" class="lock-input" id="lockInput" placeholder="YYYY-MM-DD">
+            <button class="lock-btn" id="lockBtn">Enter</button>
+            <div class="lock-error" id="lockError">😣你难道真的忘记了吗?😣</div>
+        </div>
+    </div>
+
+    <header>
+        <h1>Ryy Baby</h1>
+        
+        <!-- Anniversary Timer -->
+        <div class="timer-container" id="anniversaryTimer">
+            <!-- Content will be injected by JS -->
+        </div>
+    </header>
+
+    <main>
+        <section id="projects">
+            <h2>Creative Coding</h2>
+            <div class="projects-grid">
+                <!-- Projects will be loaded dynamically from data.js -->
+            </div>
+        </section>
+
+        <section id="gallery">
+            <h2>Photo Gallery</h2>
+            <!-- Gallery will be loaded dynamically from data.js -->
+        </section>
+    </main>
+
+    <footer>
+        <p> 💗 Ryy & Banana Hunter💗 </p>
+        <p><a href="upload.html" style="color: #bbb; text-decoration: none; font-size: 0.8rem;">Upload Files</a></p>
+    </footer>
+
+    <!-- Music Player -->
+    <div class="music-player" id="musicPlayer">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+        </svg>
+        <div class="music-info" id="musicInfo">Click to Play</div>
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="lightbox">
+        <span class="lightbox-close">&times;</span>
+        <button class="lightbox-nav lightbox-prev">&lt;</button>
+        <img class="lightbox-content" id="lightboxImg">
+        <button class="lightbox-nav lightbox-next">&gt;</button>
+        <div id="lightboxCaption"></div>
+    </div>
+
+    <!-- Config Modal -->
+    <div class="config-overlay" id="configOverlay" onclick="closeConfig()"></div>
+    <div class="config-modal" id="configModal">
+        <span class="btn-close" onclick="closeConfig()">&times;</span>
+        <h3 style="margin-top:0; color:var(--primary-color); text-align:center;">GitHub Settings</h3>
+        <div class="form-group">
+            <label>Personal Access Token</label>
+            <input type="password" id="ghToken" placeholder="Enter your token">
+        </div>
+        <div class="form-group">
+            <label>Owner</label>
+            <input type="text" id="ghOwner" value="Ryan-AYuan">
+        </div>
+        <div class="form-group">
+            <label>Repo</label>
+            <input type="text" id="ghRepo" value="ryy">
+        </div>
+        <div class="form-group">
+            <label>Branch</label>
+            <input type="text" id="ghBranch" value="main">
+        </div>
+        <button class="btn-primary" onclick="saveConfig()">Save & Reload</button>
+    </div>
+
+    <script src="github-data.js"></script>
+    <script>
+        // Config Functions
+        function openConfig() {
+            document.getElementById('configOverlay').classList.add('active');
+            document.getElementById('configModal').classList.add('active');
+            
+            // Load current values
+            document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
+            document.getElementById('ghOwner').value = localStorage.getItem('gh_owner') || 'Ryan-AYuan';
+            document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || 'ryy';
+            document.getElementById('ghBranch').value = localStorage.getItem('gh_branch') || 'main';
+        }
+
+        function closeConfig() {
+            document.getElementById('configOverlay').classList.remove('active');
+            document.getElementById('configModal').classList.remove('active');
+        }
+
+        function saveConfig() {
+            localStorage.setItem('gh_token', document.getElementById('ghToken').value);
+            localStorage.setItem('gh_owner', document.getElementById('ghOwner').value);
+            localStorage.setItem('gh_repo', document.getElementById('ghRepo').value);
+            localStorage.setItem('gh_branch', document.getElementById('ghBranch').value);
+            location.reload();
+        }
+
+        // Function to render Projects
+        const renderProjects = () => {
+            const container = document.querySelector('#projects .projects-grid');
+            if (!container || !siteData.projects) return;
+
+            container.innerHTML = siteData.projects.map(p => `
+                <a href="${p.link}" class="project-card" target="_blank">
+                    <div class="project-content">
+                        <div class="project-title">${p.title}</div>
+                        <div class="project-date">${p.date}</div>
+                        <div class="project-desc">${p.desc}</div>
+                    </div>
+                </a>
+            `).join('');
+        };
+
+        // Function to render Gallery
+        const renderGallery = () => {
+            const container = document.getElementById('gallery');
+            if (!container || !siteData.photos) return;
+            
+            // Keep the title
+            const title = container.querySelector('h2');
+            container.innerHTML = '';
+            if (title) container.appendChild(title);
+
+            // Sort years descending
+            const years = Object.keys(siteData.photos).sort((a, b) => b - a);
+
+            years.forEach(year => {
+                const yearSection = document.createElement('div');
+                yearSection.className = 'year-section'; // Default collapsed
+
+                const yearTitle = document.createElement('h3');
+                yearTitle.className = 'year-title';
+                yearTitle.textContent = year;
+                
+                const yearContent = document.createElement('div');
+                yearContent.className = 'year-content';
+
+                // Month sorting helper
+                const monthOrder = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                const months = Object.keys(siteData.photos[year]);
+                months.sort((a, b) => monthOrder.indexOf(b) - monthOrder.indexOf(a)); // Descending
+
+                months.forEach(month => {
+                    const monthSection = document.createElement('div');
+                    monthSection.className = 'month-section'; // Default collapsed
+
+                    const monthTitleEl = document.createElement('h4');
+                    monthTitleEl.className = 'month-title';
+                    monthTitleEl.textContent = month;
+
+                    const monthContent = document.createElement('div');
+                    monthContent.className = 'month-content';
+
+                    const galleryGrid = document.createElement('div');
+                    galleryGrid.className = 'gallery-grid';
+
+                    siteData.photos[year][month].forEach(photo => {
+                        const item = document.createElement('div');
+                        item.className = 'gallery-item';
+                        item.innerHTML = `
+                            <img src="${photo.src}" alt="${photo.caption}" class="gallery-img" loading="lazy">
+                            <div class="gallery-caption">${photo.caption}</div>
+                        `;
+                        galleryGrid.appendChild(item);
+                    });
+
+                    monthContent.appendChild(galleryGrid);
+                    monthSection.appendChild(monthTitleEl);
+                    monthSection.appendChild(monthContent);
+                    yearContent.appendChild(monthSection);
+                });
+
+                yearSection.appendChild(yearTitle);
+                yearSection.appendChild(yearContent);
+                container.appendChild(yearSection);
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 0. Lock Screen Logic
+            const initLockScreen = () => {
+                const lockScreen = document.getElementById('lock-screen');
+                const lockInput = document.getElementById('lockInput');
+                const lockBtn = document.getElementById('lockBtn');
+                const lockError = document.getElementById('lockError');
+                const lockContent = document.querySelector('.lock-content');
+
+                // If no anniversary data is set, remove lock screen
+                if (!lockScreen || !siteData.anniversary) {
+                    if (lockScreen) lockScreen.style.display = 'none'; 
+                    return;
+                }
+
+                const checkDate = () => {
+                    const inputDate = lockInput.value.trim();
+                    const targetDate = siteData.anniversary;
+
+                    // Allow formats: YYYY-MM-DD or YYYYMMDD
+                    const cleanInput = inputDate.replace(/-/g, '');
+                    const cleanTarget = targetDate.replace(/-/g, '');
+
+                    if (inputDate === targetDate || cleanInput === cleanTarget) {
+                        // Success
+                        lockScreen.classList.add('hidden');
+                        setTimeout(() => {
+                            lockScreen.style.display = 'none';
+                        }, 600);
+                    } else {
+                        // Error
+                        lockError.classList.add('show');
+                        lockContent.classList.add('shake');
+                        
+                        setTimeout(() => {
+                            lockContent.classList.remove('shake');
+                        }, 500);
+                    }
+                };
+
+                lockBtn.addEventListener('click', checkDate);
+                
+                lockInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        checkDate();
+                    }
+                });
+
+                // Clear error on input
+                lockInput.addEventListener('input', () => {
+                    lockError.classList.remove('show');
+                });
+            };
+            initLockScreen();
+
+            // 1. Setup Animation Observer
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            });
+
+            const observeElements = () => {
+                document.querySelectorAll('.project-card, .gallery-item').forEach(el => {
+                    el.classList.add('fade-in-up');
+                    observer.observe(el);
+                });
+            };
+
+            // 3. Setup Collapsible Logic
+            const toggleSection = (title, contentClass) => {
+                const section = title.parentElement;
+                const content = section.querySelector(contentClass);
+                
+                section.classList.toggle('active');
+                
+                if (section.classList.contains('active')) {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                    content.style.opacity = 1;
+                } else {
+                    content.style.maxHeight = null;
+                    content.style.opacity = 0;
+                }
+            };
+
+            // Initialize all active sections (Year & Month)
+            const initSections = () => {
+                // First init months (inner) so they have height
+                document.querySelectorAll('.month-section.active').forEach(section => {
+                    const content = section.querySelector('.month-content');
+                    if (content) {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        content.style.opacity = 1;
+                    }
+                });
+                
+                // Then init years (outer) - need to account for inner content
+                document.querySelectorAll('.year-section.active').forEach(section => {
+                    const content = section.querySelector('.year-content');
+                    if (content) {
+                        content.style.maxHeight = "none"; 
+                        const height = content.scrollHeight;
+                        content.style.maxHeight = height + "px";
+                        content.style.opacity = 1;
+                    }
+                });
+            };
+
+            // Event Delegation for Collapsibles (Handles dynamic content)
+            document.addEventListener('click', (e) => {
+                const yearTitle = e.target.closest('.year-title');
+                if (yearTitle) {
+                    toggleSection(yearTitle, '.year-content');
+                    return;
+                }
+
+                const monthTitle = e.target.closest('.month-title');
+                if (monthTitle) {
+                    toggleSection(monthTitle, '.month-content');
+                    
+                    // If a month is toggled, we need to update the parent Year's height
+                    const parentYearContent = monthTitle.closest('.year-content');
+                    if (parentYearContent) {
+                        parentYearContent.style.maxHeight = "none"; // Release constraint
+                        setTimeout(() => {
+                             parentYearContent.style.maxHeight = parentYearContent.scrollHeight + "px";
+                        }, 350); // Wait for month transition
+                    }
+                    return;
+                }
+            });
+
+            // Initial setup
+            setTimeout(initSections, 100);
+
+            // Handle Resize
+            window.addEventListener('resize', () => {
+                 document.querySelectorAll('.active > .year-content, .active > .month-content').forEach(el => {
+                     el.style.maxHeight = "none";
+                 });
+                 setTimeout(initSections, 50);
+            });
+
+            // 4. Music Player Logic
+            const initMusicPlayer = () => {
+                if (!siteData.music || siteData.music.length === 0) return;
+                
+                const playerBtn = document.getElementById('musicPlayer');
+                if (!playerBtn) return; // Safety check
+                const musicInfo = document.getElementById('musicInfo');
+
+                let isPlaying = false;
+                // Start with a random track
+                let currentTrackIndex = Math.floor(Math.random() * siteData.music.length);
+                const audio = new Audio();
+                
+                const playTrack = (index) => {
+                    if (index >= siteData.music.length) index = 0;
+                    currentTrackIndex = index;
+                    audio.src = siteData.music[currentTrackIndex].src;
+                    
+                    // Update info text
+                    if (musicInfo) {
+                        musicInfo.textContent = "Playing: " + siteData.music[currentTrackIndex].title;
+                    }
+
+                    audio.play().then(() => {
+                        isPlaying = true;
+                        playerBtn.classList.add('playing');
+                    }).catch(e => console.log("Playback failed", e));
+                };
+
+                const togglePlay = () => {
+                    if (isPlaying) {
+                        audio.pause();
+                        isPlaying = false;
+                        playerBtn.classList.remove('playing');
+                        if (musicInfo) musicInfo.textContent = "Paused";
+                    } else {
+                        // If no source is set, start from current index
+                        if (!audio.src) {
+                             playTrack(currentTrackIndex);
+                        } else {
+                            audio.play().then(() => {
+                                isPlaying = true;
+                                playerBtn.classList.add('playing');
+                                if (musicInfo) musicInfo.textContent = "Playing: " + siteData.music[currentTrackIndex].title;
+                            });
+                        }
+                    }
+                };
+
+                // Auto play next track (Random)
+                audio.addEventListener('ended', () => {
+                    let nextIndex;
+                    if (siteData.music.length > 1) {
+                        // Try to find a different track
+                        do {
+                            nextIndex = Math.floor(Math.random() * siteData.music.length);
+                        } while (nextIndex === currentTrackIndex);
+                    } else {
+                        nextIndex = 0;
+                    }
+                    playTrack(nextIndex);
+                });
+
+                playerBtn.addEventListener('click', togglePlay);
+            };
+            initMusicPlayer();
+
+            // 5. Anniversary Timer Logic
+            const initTimer = () => {
+                const timerContainer = document.getElementById('anniversaryTimer');
+                if (!timerContainer || !siteData.anniversary) return;
+
+                const startDate = new Date(siteData.anniversary).getTime();
+                
+                const updateTimer = () => {
+                    const now = new Date().getTime();
+                    const diff = now - startDate;
+                    
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                    timerContainer.innerHTML = `
+                        <div class="timer-title">Together For</div>
+                        <div class="timer-display">
+                            <div class="timer-item">
+                                <span class="timer-val">${days}</span>
+                                <span class="timer-label">Days</span>
+                            </div>
+                            <div class="timer-item">
+                                <span class="timer-val">${hours}</span>
+                                <span class="timer-label">Hours</span>
+                            </div>
+                            <div class="timer-item">
+                                <span class="timer-val">${minutes}</span>
+                                <span class="timer-label">Mins</span>
+                            </div>
+                            <div class="timer-item">
+                                <span class="timer-val">${seconds}</span>
+                                <span class="timer-label">Secs</span>
+                            </div>
+                        </div>
+                    `;
+                };
+
+                updateTimer(); // Initial call
+                setInterval(updateTimer, 1000);
+            };
+            // initTimer(); // Will be called when data loads
+
+            // 6. Lightbox Logic
+            const initLightbox = () => {
+                const lightbox = document.getElementById('lightbox');
+                const lightboxImg = document.getElementById('lightboxImg');
+                const lightboxCaption = document.getElementById('lightboxCaption');
+                const closeBtn = document.querySelector('.lightbox-close');
+                const prevBtn = document.querySelector('.lightbox-prev');
+                const nextBtn = document.querySelector('.lightbox-next');
+
+                if (!lightbox || !lightboxImg) return;
+
+                // State
+                let scale = 1;
+                let pointX = 0;
+                let pointY = 0;
+                let startPointX = 0;
+                let startPointY = 0;
+                let isDragging = false;
+                
+                // Navigation State
+                let galleryImages = [];
+                let currentIndex = 0;
+
+                const setTransform = () => {
+                    lightboxImg.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+                };
+
+                const resetZoom = () => {
+                    scale = 1;
+                    pointX = 0;
+                    pointY = 0;
+                    lightboxImg.style.transform = 'none';
+                    lightboxImg.style.cursor = 'zoom-in';
+                };
+
+                const updateImage = (index) => {
+                    if (index < 0) index = galleryImages.length - 1;
+                    if (index >= galleryImages.length) index = 0;
+                    
+                    currentIndex = index;
+                    const img = galleryImages[currentIndex];
+                    const caption = img.nextElementSibling; // gallery-caption is next sibling
+
+                    // Fade out effect
+                    lightboxImg.style.opacity = 0.5;
+                    
+                    setTimeout(() => {
+                        lightboxImg.src = img.src;
+                        lightboxImg.alt = img.alt;
+                        lightboxCaption.textContent = caption ? caption.textContent : '';
+                        lightboxImg.style.opacity = 1;
+                        resetZoom();
+                    }, 150);
+                };
+
+                // Open Lightbox
+                document.addEventListener('click', (e) => {
+                    const galleryItem = e.target.closest('.gallery-item');
+                    if (galleryItem) {
+                        const img = galleryItem.querySelector('img');
+                        
+                        if (img) {
+                            // Update list of images currently in DOM
+                            galleryImages = Array.from(document.querySelectorAll('.gallery-img'));
+                            currentIndex = galleryImages.indexOf(img);
+
+                            updateImage(currentIndex);
+                            lightbox.classList.add('active');
+                        }
+                    }
+                });
+
+                // Navigation Handlers
+                const showNext = (e) => {
+                    if (e) e.stopPropagation();
+                    updateImage(currentIndex + 1);
+                };
+
+                const showPrev = (e) => {
+                    if (e) e.stopPropagation();
+                    updateImage(currentIndex - 1);
+                };
+
+                nextBtn.addEventListener('click', showNext);
+                prevBtn.addEventListener('click', showPrev);
+
+                // Close Lightbox
+                const closeLightbox = () => {
+                    lightbox.classList.remove('active');
+                    setTimeout(() => {
+                        lightboxImg.src = ''; 
+                        resetZoom();
+                    }, 300);
+                };
+
+                closeBtn.addEventListener('click', closeLightbox);
+                
+                // Close on clicking outside image (but not on nav buttons)
+                lightbox.addEventListener('click', (e) => {
+                    if (e.target === lightbox) {
+                        closeLightbox();
+                    }
+                });
+
+                // Keyboard Support
+                document.addEventListener('keydown', (e) => {
+                    if (!lightbox.classList.contains('active')) return;
+
+                    if (e.key === 'Escape') closeLightbox();
+                    if (e.key === 'ArrowRight') showNext();
+                    if (e.key === 'ArrowLeft') showPrev();
+                });
+
+                // Zoom Logic: Click to Toggle
+                lightboxImg.addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    if (scale === 1) {
+                        scale = 2.5;
+                        lightboxImg.style.cursor = 'grab';
+                    } else {
+                        scale = 1;
+                        pointX = 0; 
+                        pointY = 0;
+                        lightboxImg.style.cursor = 'zoom-in';
+                    }
+                    setTransform();
+                });
+
+                // Zoom Logic: Wheel
+                lightboxImg.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const delta = -Math.sign(e.deltaY) * 0.5;
+                    const newScale = Math.min(Math.max(1, scale + delta), 5); 
+                    
+                    if (newScale !== scale) {
+                        scale = newScale;
+                        if (scale > 1) {
+                            lightboxImg.style.cursor = 'grab';
+                        } else {
+                            lightboxImg.style.cursor = 'zoom-in';
+                            pointX = 0;
+                            pointY = 0;
+                        }
+                        setTransform();
+                    }
+                });
+
+                // Pan Logic
+                lightboxImg.addEventListener('mousedown', (e) => {
+                    if (scale <= 1) return;
+                    e.preventDefault(); 
+                    isDragging = true;
+                    startPointX = e.clientX - pointX;
+                    startPointY = e.clientY - pointY;
+                    lightboxImg.classList.add('grabbing');
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    e.preventDefault();
+                    pointX = e.clientX - startPointX;
+                    pointY = e.clientY - startPointY;
+                    setTransform();
+                });
+
+                window.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        lightboxImg.classList.remove('grabbing');
+                    }
+                });
+            };
+            initLightbox();
+
+            // Handle Data Loading
+            document.addEventListener('SiteDataLoaded', () => {
+                renderProjects();
+                renderGallery();
+                observeElements();
+                initMusicPlayer();
+                initTimer(); // Update timer
+                initSections();
+            });
+
+            // Start timer immediately with default
+            initTimer();
+        });
+    </script>
+    <!-- Background Animation -->
+    <script>
+        (function() {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            let particles = [];
+            let mouseParticles = [];
+
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            // Mouse Move Effect
+            let mouse = { x: null, y: null };
+            window.addEventListener('mousemove', (e) => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+                // Add particles on move
+                for(let i=0; i<2; i++){
+                    mouseParticles.push(new Particle('mouseTrail', mouse.x, mouse.y));
+                }
+            });
+
+            class Particle {
+                constructor(type, x, y) {
+                    this.type = type;
+                    this.initialX = x;
+                    this.initialY = y;
+                    this.init();
+                }
+
+                init() {
+                    if (this.type === 'heart') {
+                        this.x = Math.random() * width;
+                        this.y = height + Math.random() * 100;
+                        this.vx = (Math.random() - 0.5) * 1;
+                        this.vy = -1 - Math.random() * 2;
+                        this.size = 10 + Math.random() * 15;
+                        this.life = 1;
+                        this.decay = 0.002 + Math.random() * 0.005;
+                        this.color = `rgba(255, ${150 + Math.random() * 50}, ${150 + Math.random() * 50},`;
+                    } else if (this.type === 'firefly') {
+                        this.x = Math.random() * width;
+                        this.y = Math.random() * height;
+                        this.vx = (Math.random() - 0.5) * 0.3;
+                        this.vy = (Math.random() - 0.5) * 0.3;
+                        this.size = 1 + Math.random() * 2;
+                        this.alpha = Math.random();
+                        this.alphaSpeed = 0.005 + Math.random() * 0.01;
+                    } else if (this.type === 'snow') {
+                        this.x = Math.random() * width;
+                        this.y = Math.random() * height;
+                        this.vy = 0.5 + Math.random() * 1; 
+                        this.vx = (Math.random() - 0.5) * 0.5;
+                        this.size = 1 + Math.random() * 2;
+                    } else if (this.type === 'meteor') {
+                        this.resetMeteor();
+                    } else if (this.type === 'mouseTrail') {
+                        this.x = this.initialX;
+                        this.y = this.initialY;
+                        this.size = Math.random() * 5 + 2;
+                        this.vx = (Math.random() - 0.5) * 2;
+                        this.vy = (Math.random() - 0.5) * 2;
+                        this.life = 1;
+                        this.decay = 0.03 + Math.random() * 0.03;
+                        this.color = `rgba(${200 + Math.random() * 55}, ${150 + Math.random() * 105}, ${200 + Math.random() * 55},`;
+                    }
+                }
+
+                resetMeteor() {
+                     this.x = Math.random() * width * 1.5 - width * 0.25; // Wide range
+                     this.y = -100;
+                     this.vx = -4 - Math.random() * 4; 
+                     this.vy = 4 + Math.random() * 4; 
+                     this.size = 2 + Math.random();
+                     this.len = 50 + Math.random() * 80;
+                     this.life = 0; // Delay counter
+                     this.maxLife = Math.random() * 200; // Random delay
+                     this.active = false;
+                }
+
+                update() {
+                    if (this.type === 'heart') {
+                        this.x += this.vx;
+                        this.y += this.vy;
+                        this.life -= this.decay;
+                        this.x += Math.sin(this.life * 10) * 0.5;
+                        if (this.life <= 0) this.init();
+                    } else if (this.type === 'firefly') {
+                        this.x += this.vx;
+                        this.y += this.vy;
+                        
+                        if (this.x < 0) this.x = width;
+                        if (this.x > width) this.x = 0;
+                        if (this.y < 0) this.y = height;
+                        if (this.y > height) this.y = 0;
+
+                        this.alpha += this.alphaSpeed;
+                        if (this.alpha > 1 || this.alpha < 0) {
+                            this.alphaSpeed *= -1;
+                        }
+                    } else if (this.type === 'snow') {
+                        this.y += this.vy;
+                        this.x += this.vx + Math.sin(this.y * 0.01) * 0.2;
+                        
+                        if (this.y > height) {
+                            this.y = -10;
+                            this.x = Math.random() * width;
+                        }
+                    } else if (this.type === 'meteor') {
+                        if (!this.active) {
+                            this.life++;
+                            if (this.life > this.maxLife) {
+                                this.active = true;
+                                this.x = Math.random() * width + 200; // Start mostly right side to move left-down
+                                this.y = -100;
+                            }
+                        } else {
+                            this.x += this.vx;
+                            this.y += this.vy;
+                            
+                            if (this.x < -this.len || this.y > height + this.len) {
+                                this.resetMeteor();
+                            }
+                        }
+                    } else if (this.type === 'mouseTrail') {
+                        this.x += this.vx;
+                        this.y += this.vy;
+                        this.life -= this.decay;
+                        this.size *= 0.95; // Shrink
+                    }
+                }
+
+                draw() {
+                    if (this.type === 'heart') {
+                        ctx.fillStyle = this.color + this.life + ')';
+                        ctx.beginPath();
+                        const s = this.size;
+                        const x = this.x;
+                        const y = this.y;
+                        ctx.moveTo(x, y + s / 4);
+                        ctx.quadraticCurveTo(x, y, x - s / 2, y);
+                        ctx.quadraticCurveTo(x - s, y, x - s, y + s / 2);
+                        ctx.quadraticCurveTo(x - s, y + s, x, y + s * 1.5);
+                        ctx.quadraticCurveTo(x + s, y + s, x + s, y + s / 2);
+                        ctx.quadraticCurveTo(x + s, y, x + s / 2, y);
+                        ctx.quadraticCurveTo(x, y, x, y + s / 4);
+                        ctx.fill();
+                    } else if (this.type === 'firefly') {
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        // Changed to Gold/Yellow to be visible on light background
+                        ctx.fillStyle = `rgba(255, 215, 0, ${Math.abs(this.alpha)})`; 
+                        ctx.shadowBlur = 8;
+                        ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    } else if (this.type === 'snow') {
+                         // Changed to Lavender/Blueish to be visible on light background
+                         ctx.fillStyle = `rgba(179, 157, 219, 0.8)`;
+                         ctx.beginPath();
+                         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                         ctx.fill();
+                    } else if (this.type === 'meteor' && this.active) {
+                        ctx.beginPath();
+                        const gradient = ctx.createLinearGradient(this.x, this.y, this.x - this.vx * 10, this.y - this.vy * 10);
+                        // Changed to Purple/Pink gradient
+                        gradient.addColorStop(0, "rgba(255, 105, 180, 1)"); // HotPink
+                        gradient.addColorStop(1, "rgba(255, 105, 180, 0)");
+                        
+                        ctx.strokeStyle = gradient;
+                        ctx.lineWidth = 2;
+                        ctx.lineCap = "round";
+                        ctx.moveTo(this.x, this.y);
+                        ctx.lineTo(this.x - this.vx * (this.len/5), this.y - this.vy * (this.len/5));
+                        ctx.stroke();
+                    } else if (this.type === 'mouseTrail') {
+                        ctx.fillStyle = this.color + this.life + ')';
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+
+            for (let i = 0; i < 15; i++) particles.push(new Particle('heart'));
+            for (let i = 0; i < 30; i++) particles.push(new Particle('firefly'));
+            for (let i = 0; i < 40; i++) particles.push(new Particle('snow'));
+            for (let i = 0; i < 3; i++) particles.push(new Particle('meteor'));
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+                particles.forEach(p => p.update());
+                particles.forEach(p => p.draw());
+
+                // Handle mouse particles
+                for (let i = 0; i < mouseParticles.length; i++) {
+                    mouseParticles[i].update();
+                    mouseParticles[i].draw();
+                    if (mouseParticles[i].life <= 0) {
+                        mouseParticles.splice(i, 1);
+                        i--;
+                    }
+                }
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
+    </script>
+</body>
+</html>
