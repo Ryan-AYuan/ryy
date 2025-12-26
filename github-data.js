@@ -75,7 +75,8 @@ async function fetchGitHubData() {
 
     try {
         // Use the Git Tree API for recursive listing (much faster/efficient)
-        const treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
+        // Add timestamp to prevent caching
+        const treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1&t=${new Date().getTime()}`;
         const response = await fetch(treeUrl, { headers });
 
         if (!response.ok) {
@@ -135,10 +136,13 @@ async function fetchGitHubData() {
 
                     if (!siteData.photos[year][monthName]) siteData.photos[year][monthName] = [];
 
+                    // Construct Raw GitHub URL to ensure images load even if running locally (and file is only on cloud)
+                    // Encode path parts to handle spaces/special chars
+                    const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path.split('/').map(encodeURIComponent).join('/')}`;
+
                     siteData.photos[year][monthName].push({
-                        src: path, // GitHub raw link or relative path?
-                        // Relative path works if served from same repo root via GitHub Pages.
-                        // If local dev, relative path works.
+                        src: rawUrl,
+                        blobUrl: item.url, // Store API Blob URL for private repo access
                         caption: `${monthName} ${year} - ${formatTitle(filename)}`
                     });
                 }
@@ -148,9 +152,11 @@ async function fetchGitHubData() {
             // User specified that bgm folder contains mp3 files.
             else if (path.startsWith('bgm/') && path.match(/\.mp3$/i)) {
                 const filename = path.split('/').pop();
+                const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path.split('/').map(encodeURIComponent).join('/')}`;
                 siteData.music.push({
                     title: formatTitle(filename),
-                    src: path
+                    src: rawUrl,
+                    blobUrl: item.url // Store API Blob URL for private repo access
                 });
             }
         });
