@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ryy's Creative Space</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+TC:wght@300;400;700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ff99ac; /* Soft Pink */
+            --secondary-color: #b39ddb; /* Soft Lavender */
+            --dark-bg: #fff0f5; /* Lavender Blush (Light BG) */
+            --card-bg: #ffffff; /* White Card */
+            --text-color: #ff6b81; 
+            --light-text: #666666; /* Dark Grey for body text */
+        }
+
+        body {
+            font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: var(--light-text);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #fff0f5 0%, #ffe6eb 100%);
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(255, 153, 172, 0.15);
+        }
+
+        h1 {
+            margin: 0;
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 3rem;
+            color: var(--primary-color);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 300;
+            margin-top: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        /* Anniversary Timer */
+        .timer-container {
+            margin-top: 1.5rem;
+            text-align: center;
+            color: var(--light-text);
+            font-weight: 300;
+        }
+        
+        .timer-title {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .timer-display {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            font-size: 1.2rem;
+            flex-wrap: wrap;
+        }
+
+        .timer-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 60px;
+        }
+
+        .timer-val {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .timer-label {
+            font-size: 0.7rem;
+            color: #888;
+            margin-top: 0.2rem;
+            text-transform: uppercase;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        section {
+            margin-bottom: 4rem;
+        }
+
+        h2 {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 2rem;
+            display: inline-block;
+            color: var(--secondary-color);
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 2rem;
+            letter-spacing: 1px;
+        }
+
+        /* Projects Grid */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .project-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            border: 1px solid rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 1;
+        }
+
+        .project-card:hover {
+            transform: translateY(-15px) scale(1.08) rotate(1deg);
+            box-shadow: 0 25px 50px rgba(255, 153, 172, 0.5);
+            border-color: var(--primary-color);
+            background-color: #fffbfd;
+            z-index: 10;
+        }
+
+        .project-content {
+            padding: 1.5rem;
+        }
+
+        .project-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .project-date {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 1rem;
+        }
+
+        .project-desc {
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        /* Animation Classes */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Ensure hover overrides the visible state transform */
+        .project-card.visible:hover {
+            transform: translateY(-15px) scale(1.08) rotate(1deg);
+        }
+
+        /* Gallery Grid */
+        .year-section {
+            margin-bottom: 2rem;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .year-title {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+            margin: 0;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            user-select: none;
+        }
+
+        .year-title:hover {
+            background-color: #fff5f7;
+        }
+        
+        /* Arrow icon */
+        .year-title::before {
+            content: '▼';
+            font-size: 0.8em;
+            margin-right: 1rem;
+            transition: transform 0.3s ease;
+            color: var(--primary-color);
+            transform: rotate(-90deg); /* Default collapsed state */
+        }
+
+        .year-section.active .year-title::before {
+            transform: rotate(0deg); /* Active/Open state */
+        }
+        
+        .year-title::after {
+            content: '';
+            flex-grow: 1;
+            height: 1px;
+            background: rgba(0,0,0,0.05);
+            margin-left: 1rem;
+        }
+
+        .year-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .year-section.active .year-content {
+            /* max-height will be set by JS */
+            opacity: 1;
+        }
+
+        /* Month Styles */
+        .month-section {
+            margin: 1rem 1.5rem;
+            border-left: 2px solid rgba(0,0,0,0.05);
+        }
+
+        .month-title {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+            margin: 0;
+            padding: 0.8rem 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            opacity: 0.9;
+        }
+
+        .month-title:hover {
+            color: var(--primary-color);
+        }
+
+        .month-title::before {
+            content: '▼';
+            font-size: 0.7em;
+            margin-right: 0.8rem;
+            transition: transform 0.3s ease;
+            transform: rotate(-90deg);
+        }
+
+        .month-section.active .month-title::before {
+            transform: rotate(0deg);
+        }
+
+        .month-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            opacity: 0;
+        }
+
+        .month-section.active .month-content {
+            opacity: 1;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            padding: 0 1.5rem 1.5rem 1.5rem;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 3/4;
+            background-color: #f8f8f8;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.02);
+            z-index: 10;
+        }
+
+        .gallery-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s ease;
+        }
+        
+        .gallery-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 0.5rem;
+            text-align: center;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover .gallery-caption {
+            transform: translateY(0);
+        }
+
+        /* Music Player */
+        .music-player {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .music-btn-container {
+            width: 50px;
+            height: 50px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .music-btn-container:hover {
+            transform: scale(1.1);
+        }
+
+        .music-btn-container.playing {
+            animation: pulse 2s infinite;
+        }
+
+        .music-search-panel {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 250px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            padding: 15px;
+            transform: scale(0);
+            transform-origin: bottom right;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .music-search-panel.active {
+            transform: scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .music-search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            outline: none;
+            box-sizing: border-box;
+            font-family: 'Noto Sans TC', sans-serif;
+            margin-bottom: 10px;
+        }
+
+        .music-search-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .music-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        
+        /* Custom scrollbar for music list */
+        .music-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .music-list::-webkit-scrollbar-thumb {
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 3px;
+        }
+
+        .music-item {
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #666;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .music-item:hover {
+            background-color: #f0f0f0;
+            color: var(--primary-color);
+        }
+
+        .music-item.active {
+            color: var(--primary-color);
+            font-weight: bold;
+            background-color: #fff0f5;
+        }
+
+        .music-info {
+            position: absolute;
+            right: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .music-btn-container:hover .music-info {
+            opacity: 1;
+        }
+        
+        .search-toggle-btn {
+            position: absolute;
+            top: -10px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #666;
+            z-index: 2;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 107, 107, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+        }
+
+        /* Stats in Footer */
+        .stats-container {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            opacity: 0.8;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background-color: #fff0f5;
+            color: #888;
+            margin-top: auto;
+        }
+
+        /* Lightbox */
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden; /* Added visibility for better control */
+            pointer-events: none;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .lightbox.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .lightbox-content {
+            max-width: 90%;
+            max-height: 80vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border-radius: 4px;
+            cursor: zoom-in;
+            transition: transform 0.3s ease;
+        }
+
+        .lightbox-content.grabbing {
+            cursor: grabbing;
+            transition: none;
+        }
+
+        #lightboxCaption {
+            position: absolute;
+            bottom: 5%;
+            color: #fff;
+            text-align: center;
+            width: 100%;
+            font-size: 1.1rem;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            z-index: 2001;
+        }
+
+        .lightbox-close:hover,
+        .lightbox-close:focus {
+            color: var(--primary-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.3);
+            color: white;
+            border: none;
+            padding: 1rem 0.8rem;
+            cursor: pointer;
+            font-size: 2rem;
+            z-index: 2002;
+            transition: all 0.3s ease;
+            user-select: none;
+            border-radius: 4px;
+        }
+
+        .lightbox-nav:hover {
+            background: var(--primary-color);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .lightbox-prev { left: 20px; }
+        .lightbox-next { right: 20px; }
+
+        /* Lock Screen */
+        #lock-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #fff0f5 0%, #ffe6eb 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+
+        #lock-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .lock-content {
+            text-align: center;
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(255, 153, 172, 0.3);
+            width: 90%;
+            max-width: 400px;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .lock-title {
+            color: var(--primary-color);
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 400;
+            font-family: 'Ma Shan Zheng', cursive;
+            letter-spacing: 2px;
+        }
+        
+        .lock-subtitle {
+            color: #888;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            font-family: 'Ma Shan Zheng', cursive;
+            letter-spacing: 1px;
+        }
+
+        .lock-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            outline: none;
+            transition: all 0.3s;
+            box-sizing: border-box;
+            text-align: center;
+            letter-spacing: 2px;
+            color: var(--light-text);
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+
+        .lock-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 153, 172, 0.2);
+        }
+        
+        .lock-input::placeholder {
+            color: #ccc;
+            letter-spacing: normal;
+        }
+
+        .lock-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 100%;
+            font-weight: 400;
+            box-shadow: 0 5px 15px rgba(255, 153, 172, 0.4);
+            font-family: 'Ma Shan Zheng', cursive;
+            letter-spacing: 3px;
+        }
+
+        .lock-btn:hover {
+            background: #ff7e96;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(255, 153, 172, 0.5);
+        }
+        
+        .lock-btn:active {
+            transform: translateY(1px);
+        }
+
+        .lock-error {
+            color: #ff4757;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            min-height: 1.5em;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-family: 'Ma Shan Zheng', cursive;
+            letter-spacing: 1px;
+        }
+        
+        .lock-error.show {
+            opacity: 1;
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* Responsive */
+        /* Background Canvas */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Config Modal */
+        .config-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .config-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        .config-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 9001;
+            width: 90%;
+            max-width: 400px;
+            display: none;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .config-modal.active {
+            display: block;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .config-modal .form-group {
+            margin-bottom: 1rem;
+        }
+        .config-modal label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+        .config-modal input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .config-modal input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+        .btn-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div id="lock-screen">
+        <div class="lock-content">
+            <div class="lock-title">💜即将进入回忆空间💜</div>
+            <div class="lock-subtitle">💗是否还记得我们的周年纪念日?💗</div>
+            <input type="text" class="lock-input" id="lockInput" placeholder="YYYY-MM-DD">
+            <button class="lock-btn" id="lockBtn">Enter</button>
+            <div class="lock-error" id="lockError">😣你难道真的忘记了吗?😣</div>
+        </div>
+    </div>
+
+    <header>
+        <h1>Ryy Baby</h1>
+        
+        <!-- Anniversary Timer -->
+        <div class="timer-container" id="anniversaryTimer">
+            <!-- Content will be injected by JS -->
+        </div>
+    </header>
+
+    <main>
+        <section id="projects">
+            <h2>Creative Coding</h2>
+            <div class="projects-grid">
+                <!-- Projects will be loaded dynamically from data.js -->
+            </div>
+        </section>
+
+        <section id="gallery">
+            <h2>Photo Gallery</h2>
+            <!-- Gallery will be loaded dynamically from data.js -->
+        </section>
+    </main>
+
+    <footer>
+        <p> 💗 Ryy & Banana Hunter💗 </p>
+        <p><a href="upload.html" style="color: #bbb; text-decoration: none; font-size: 0.8rem;">Upload Files</a></p>
+    </footer>
+
+    <!-- Music Player -->
+    <div class="music-player" id="musicPlayer">
+        <!-- Search Panel -->
+        <div class="music-search-panel" id="musicSearchPanel">
+            <input type="text" class="music-search-input" id="musicSearchInput" placeholder="Search songs...">
+            <ul class="music-list" id="musicList">
+                <!-- Music items will be injected here -->
+            </ul>
+        </div>
+        
+        <!-- Main Play Button -->
+        <div class="music-btn-container" id="musicBtnContainer">
+            <div class="search-toggle-btn" id="searchToggleBtn">🔍</div>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18V5l12-2v13"></path>
+                <circle cx="6" cy="18" r="3"></circle>
+                <circle cx="18" cy="16" r="3"></circle>
+            </svg>
+            <div class="music-info" id="musicInfo">Click to Play</div>
+        </div>
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="lightbox">
+        <span class="lightbox-close">&times;</span>
+        <button class="lightbox-nav lightbox-prev">&lt;</button>
+        <img class="lightbox-content" id="lightboxImg">
+        <button class="lightbox-nav lightbox-next">&gt;</button>
+        <div id="lightboxCaption"></div>
+    </div>
+
+    <!-- Settings Button -->
+    <div onclick="openConfig()" style="position:fixed; bottom:20px; left:20px; width:40px; height:40px; background:white; border-radius:50%; box-shadow:0 2px 10px rgba(0,0,0,0.1); cursor:pointer; display:flex; justify-content:center; align-items:center; z-index:999; transition: transform 0.3s;" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform='rotate(0deg)'">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+    </div>
+
+    <!-- Config Modal (Enhanced Structure matching app.js) -->
+    <div class="config-overlay" onclick="closeConfig()"></div>
+    <div id="configModal" class="config-modal">
+        <span class="btn-close" onclick="closeConfig()">&times;</span>
+        <h3 style="margin-top:0; color:var(--primary-color);">Settings</h3>
+        
+        <div class="form-group">
+            <label>GitHub Token (Required for Private Repos)</label>
+            <input type="password" id="configToken" placeholder="ghp_...">
+        </div>
+        
+        <div class="form-group">
+            <label>Owner</label>
+            <input type="text" id="configOwner" placeholder="Username">
+        </div>
+        
+        <div class="form-group">
+            <label>Repo</label>
+            <input type="text" id="configRepo" placeholder="Repository">
+        </div>
+        
+        <div class="form-group">
+            <label>Branch</label>
+            <input type="text" id="configBranch" placeholder="main">
+        </div>
+
+        <div class="form-group">
+            <label>Rate Limit</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <button onclick="checkRateLimit()" style="background:#6c5ce7; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:0.8rem;">Check Usage</button>
+                <span id="rateLimitResult" style="font-size:0.8rem; color:#666;"></span>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:1.5rem;">
+            <button onclick="closeConfig()" style="flex:1; background:#eee; color:#666; border:none; padding:10px; border-radius:50px; cursor:pointer;">Cancel</button>
+            <button onclick="saveConfig()" class="btn-primary" style="flex:2; margin-top:0;">Save & Reload</button>
+        </div>
+    </div>
+
+    <!-- Modularized Scripts -->
+    <script src="github-data.js"></script>
+    <script src="app.js"></script>
+    <script src="gallery.js"></script>
+    <script src="animation.js"></script>
+</body>
+</html>
