@@ -1094,6 +1094,10 @@
                         lockError.classList.add('show');
                         lockContent.classList.add('shake');
                         
+                        // Fun error messages
+                        const msgs = ["你真的忘记了呀?💭 是我们的纪念日呢 😫", "脑子是不是都只用来想我啦?🤔 纪念日没有留下位置呢? 📅", "😠 我气你的遗忘,又疼你的慌张~ ❤️", "💔 你输错的不是数字,是我等你的分分秒秒 ⏳", "我以为那是我们共同的密码 🔐,😢 原来只有我在反复默记"];
+                        lockError.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+
                         setTimeout(() => {
                             lockContent.classList.remove('shake');
                         }, 500);
@@ -1703,6 +1707,24 @@
                 // Add particles on move
                 for(let i=0; i<2; i++){
                     mouseParticles.push(new Particle('mouseTrail', mouse.x, mouse.y));
+                }
+            });
+
+            // Click Effect (New Interaction)
+            window.addEventListener('click', (e) => {
+                // Spawn a burst of hearts and particles
+                for(let i=0; i<8; i++){
+                    mouseParticles.push(new Particle('mouseTrail', e.clientX, e.clientY));
+                }
+                // Spawn a few temporary hearts that float up
+                for(let i=0; i<3; i++){
+                    const p = new Particle('heart');
+                    p.x = e.clientX;
+                    p.y = e.clientY;
+                    p.vx = (Math.random() - 0.5) * 4;
+                    p.vy = -2 - Math.random() * 3; // Move up faster
+                    p.decay = 0.01 + Math.random() * 0.01; // Fade faster
+                    particles.push(p);
                 }
             });
 
