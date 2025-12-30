@@ -17,6 +17,11 @@ const PROJECT_METADATA = {
         title: "❤️ Heart Animation ❤️",
         date: "2025-12-22", 
         desc: "An interactive heart popup animation with confetti effects and floating particles." 
+    },
+    "wishes.html": {
+        title: "💗 Wishes 💗",
+        date: "2025-12-30", 
+        desc: "A heartfelt wishes page for my ryy."
     }
     // Add more files here as needed:
 };
