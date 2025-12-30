@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我希望我的萤萤</title>
+    <!-- Import artistic Chinese fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #ff6b81;
+            --secondary-color: #ff9a9e;
+            --bg-deep: #0f0c29;
+            --bg-mid: #302b63;
+            --bg-light: #24243e;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--bg-deep), var(--bg-mid), var(--bg-light));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            /* Use artistic font */
+            font-family: 'Zhi Mang Xing', cursive, "Microsoft YaHei", sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="%23ff6b81"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>') 10 10, auto;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Particles */
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            pointer-events: none;
+            transition: transform 0.2s ease-out;
+        }
+
+        /* Center Title */
+        #center-title {
+            position: relative;
+            font-family: 'Ma Shan Zheng', cursive; /* Distinctive title font */
+            font-size: 7rem;
+            z-index: 1000; /* Keep title on top of most elements */
+            text-align: center;
+            padding: 40px;
+            letter-spacing: 5px;
+            transition: transform 0.1s ease-out;
+            cursor: pointer;
+            user-select: none;
+            pointer-events: auto; /* Ensure clickable */
+        }
+
+        #center-title span {
+            display: inline-block;
+            color: transparent;
+            background: linear-gradient(to right, #ffecd2 0%, #fcb69f 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            /* Initial shadow */
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: breathe 3s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3)); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 25px rgba(255, 107, 129, 0.6)); }
+        }
+
+        #center-title:hover span {
+            animation-play-state: paused;
+        }
+
+        /* Popup Words */
+        .popup-word {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 107, 129, 0.3);
+            white-space: nowrap;
+            will-change: transform, opacity, filter;
+            padding: 10px 20px;
+            border-radius: 30px;
+            /* Default transform-style for 3D context */
+            transform-style: preserve-3d;
+        }
+
+        .popup-word:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 20px rgba(255, 107, 129, 0.4);
+            z-index: 200 !important;
+            /* Pause animation on hover handled in JS or via animation-play-state */
+            animation-play-state: paused; 
+        }
+
+        @keyframes floatAnim {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(2deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+
+        /* Click Heart Effect */
+        .click-heart {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ff6b81"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>') no-repeat center/contain;
+            pointer-events: none;
+            animation: heartBurst 0.8s ease-out forwards;
+            z-index: 999;
+        }
+
+        /* Cursor Trail */
+        .trail-star {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, #fff 30%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: fadeOut 0.8s ease-out forwards;
+            z-index: 9999;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes fadeOut {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        @keyframes heartBurst {
+            0% { transform: scale(0) translate(0, 0); opacity: 1; }
+            100% { transform: scale(2) translate(var(--tx), var(--ty)); opacity: 0; }
+        }
+
+        /* --- New Visual Effects --- */
+        
+        /* Falling Snow */
+        .snowflake {
+            position: absolute;
+            top: -20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1em;
+            user-select: none;
+            z-index: 50; 
+            pointer-events: none;
+            animation: fall linear forwards;
+            filter: drop-shadow(0 0 2px white);
+        }
+
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(360deg); }
+        }
+
+        /* Shooting Star */
+        .shooting-star {
+            position: absolute;
+            width: 150px;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,1), rgba(255,255,255,0));
+            transform: rotate(-45deg);
+            pointer-events: none;
+            z-index: 20; /* Behind text */
+            opacity: 0;
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.8));
+            animation: shoot 2.5s ease-out forwards;
+        }
+
+        @keyframes shoot {
+            0% { transform: translateX(0) translateY(0) rotate(-45deg) scale(0.5); opacity: 0; }
+            10% { opacity: 1; transform: translateX(-50px) translateY(50px) rotate(-45deg) scale(1); }
+            100% { transform: translateX(-800px) translateY(800px) rotate(-45deg) scale(1); opacity: 0; }
+        }
+
+        /* Enhanced Drag Trail Particle */
+        .drag-particle {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,107,129,0.8) 40%, transparent 100%);
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            mix-blend-mode: screen;
+            animation: dragFade 0.8s ease-out forwards;
+            box-shadow: 0 0 10px rgba(255, 107, 129, 0.6);
+        }
+
+        @keyframes dragFade {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        }
+
+        /* --- Welcome Screen --- */
+        #welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--bg-deep), var(--bg-mid));
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease-out;
+        }
+
+        #start-btn {
+            padding: 15px 40px;
+            font-size: 2.5rem;
+            font-family: 'Ma Shan Zheng', cursive;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 107, 129, 0.5);
+            border-radius: 50px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(255, 107, 129, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-shadow: 0 0 10px rgba(255, 107, 129, 0.8);
+            animation: btnPulse 2s infinite;
+        }
+
+        #start-btn:hover {
+            background: rgba(255, 107, 129, 0.3);
+            box-shadow: 0 0 40px rgba(255, 107, 129, 0.6);
+            transform: scale(1.05);
+        }
+
+        @keyframes btnPulse {
+            0% { box-shadow: 0 0 20px rgba(255, 107, 129, 0.3); transform: scale(1); }
+            50% { box-shadow: 0 0 40px rgba(255, 107, 129, 0.6); transform: scale(1.02); }
+            100% { box-shadow: 0 0 20px rgba(255, 107, 129, 0.3); transform: scale(1); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Welcome Screen -->
+    <div id="welcome-screen">
+        <button id="start-btn">💗 To 萤萤 💗</button>
+    </div>
+
+    <!-- Background Particles -->
+    <div id="particles"></div>
+
+    <div id="center-title"><span>我希望我的萤萤</span></div>
+    <div id="container"></div>
+
+    <script>
+        const rawText = "情绪稳定、善解人意、独立、懂得珍惜、有上进心、不卑不亢、心怀感恩、保持热爱、凡事看开、负责任、坚持运动、不抱怨、未来可期、闪闪发光、有耐心、懂得倾听、专一、诚实守信、充满希望、适度依赖、保持好奇心、不随波逐流、活在当下、接受不完美、灵魂自由、举止优雅、内心富足、知足常乐、勤奋、守时、讲道理、有担当、心地善良、不敷衍、凡事有回应、做事有始有终、少熬夜、多喝水、保持童心、勇敢追梦、清醒自知、财运亨通、身体健康、诸事顺遂、如愿以偿、可以脆弱、允许犯错、爱我、幸福、有主见、独一无二、能吃苦、爱笑、不要管别人的看法、没有烦恼、万事顺利、好好吃饭! 不计较、爱生活、温柔、每天想我、不要觉得自己胖、敢于尝试、重情节俭、机灵、懂分寸、有主见、每天开心、自信一点、不要内耗、自律、会安慰人、乐观向上、大方、有魅力、无忧无虑、友善、贴心、有趣、坚强、勇敢做自己、直爽、多管我、坦诚、越来越美丽、不虚荣、热爱生活、好好睡觉、爱自己、懂得拒绝、努力、细心细腻、不将就、岁岁平安、不逃避问题、尊重、会妥协、会鼓励、不冷漠";
+        
+        let words = rawText.split('、').map(w => w.trim());
+        const fixedWords = [];
+        words.forEach(w => {
+            if (w.includes('好好吃饭! 不计较')) {
+                fixedWords.push('好好吃饭!');
+                fixedWords.push('不计较');
+            } else {
+                fixedWords.push(w);
+            }
+        });
+        words = fixedWords;
+        words.sort(() => Math.random() - 0.5);
+
+        const container = document.getElementById('container');
+        const title = document.getElementById('center-title');
+        const particlesContainer = document.getElementById('particles');
+
+        // --- Interactive Particles ---
+        const particles = [];
+        const particleCount = 50;
+
+        function initParticles() {
+            for (let i = 0; i < particleCount; i++) {
+                const p = document.createElement('div');
+                p.classList.add('particle');
+                
+                const size = Math.random() * 4 + 2;
+                p.style.width = `${size}px`;
+                p.style.height = `${size}px`;
+                
+                // Random position
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                p.style.left = `${x}vw`;
+                p.style.top = `${y}vh`;
+                
+                // Store original pos for parallax
+                p.dataset.ox = x;
+                p.dataset.oy = y;
+                // Random depth for parallax speed
+                p.dataset.depth = Math.random() * 2 + 0.5;
+
+                particlesContainer.appendChild(p);
+                particles.push(p);
+            }
+        }
+        initParticles();
+
+        // Mouse Parallax & Trail
+        let lastParticleTime = 0;
+        let isMouseDown = false;
+        
+        document.addEventListener('mousedown', () => isMouseDown = true);
+        document.addEventListener('mouseup', () => isMouseDown = false);
+
+        document.addEventListener('mousemove', (e) => {
+            const mx = (e.clientX / window.innerWidth - 0.5) * 2; // -1 to 1
+            const my = (e.clientY / window.innerHeight - 0.5) * 2;
+
+            // Move title slightly (3D tilt effect)
+            title.style.transform = `perspective(1000px) rotateX(${-my * 10}deg) rotateY(${mx * 10}deg)`;
+
+            // Move particles
+            particles.forEach(p => {
+                const depth = parseFloat(p.dataset.depth);
+                const x = parseFloat(p.dataset.ox);
+                const y = parseFloat(p.dataset.oy);
+                
+                // Calculate offset
+                const offX = mx * 20 * depth;
+                const offY = my * 20 * depth;
+                
+                p.style.transform = `translate(${offX}px, ${offY}px)`;
+            });
+
+            // Enhanced Cursor Trail Effect
+            const now = Date.now();
+            // If dragging (mouse down), spawn more frequently
+            const limit = isMouseDown ? 20 : 50; 
+            
+            if (now - lastParticleTime > limit) { 
+                lastParticleTime = now;
+                
+                const count = isMouseDown ? 3 : 1;
+                
+                for(let i=0; i<count; i++) {
+                    const p = document.createElement('div');
+                    p.classList.add('drag-particle');
+                    
+                    const size = Math.random() * 8 + 4;
+                    p.style.width = `${size}px`;
+                    p.style.height = `${size}px`;
+                    
+                    // Spread logic
+                    const spread = isMouseDown ? 15 : 5;
+                    const spreadX = (Math.random() - 0.5) * spread;
+                    const spreadY = (Math.random() - 0.5) * spread;
+                    
+                    p.style.left = `${e.clientX + spreadX}px`;
+                    p.style.top = `${e.clientY + spreadY}px`;
+                    
+                    document.body.appendChild(p);
+                    setTimeout(() => p.remove(), 800);
+                }
+            }
+        });
+
+        // Click Heart Effect
+        document.addEventListener('click', (e) => {
+            createHeart(e.clientX, e.clientY);
+        });
+
+        function createHeart(x, y) {
+            const count = 5 + Math.random() * 5;
+            for(let i=0; i<count; i++) {
+                const h = document.createElement('div');
+                h.classList.add('click-heart');
+                h.style.left = `${x}px`;
+                h.style.top = `${y}px`;
+                
+                // Random direction
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 50 + Math.random() * 100;
+                const tx = Math.cos(angle) * velocity;
+                const ty = Math.sin(angle) * velocity;
+                
+                h.style.setProperty('--tx', `${tx}px`);
+                h.style.setProperty('--ty', `${ty}px`);
+                
+                document.body.appendChild(h);
+                setTimeout(() => h.remove(), 800);
+            }
+        }
+
+        // --- Words Logic ---
+        function getRandomPosition(element) {
+            const bodyWidth = window.innerWidth;
+            const bodyHeight = window.innerHeight;
+            // Remove safe zone logic to allow words anywhere
+            // Use a margin of 50px to keep somewhat on screen
+            const x = Math.random() * (bodyWidth - 100) + 50;
+            const y = Math.random() * (bodyHeight - 100) + 50;
+            return { x, y };
+        }
+
+        function showNextWord() {
+            const wordIndex = Math.floor(Math.random() * words.length);
+            const word = words[wordIndex];
+
+            const el = document.createElement('div');
+            el.classList.add('popup-word');
+            el.textContent = word;
+            
+            // --- Enhanced Visuals: Depth of Field Effect ---
+            // Random depth factor: 0 (far/back) to 1 (near/front)
+            const depth = Math.random(); 
+            
+            // Scale: Far items are smaller (0.6), Near items are moderately big (1.8)
+            const scale = 0.6 + (depth * 1.2); 
+            
+            // Blur: Far items are blurry (4px), Near items are sharp (0px)
+            const blurAmount = (1 - depth) * 4;
+            
+            // Z-Index: Corresponds to depth. 
+            // Title is 1000. 
+            // We want some words BEHIND title (<1000) and some IN FRONT (>1000).
+            // Let's map depth 0->1 to z-index 100->2000.
+            const zIndex = Math.floor(depth * 1900 + 100); 
+            
+            // Opacity: Far items slightly more transparent
+            const opacity = 0.6 + (depth * 0.4);
+
+            el.style.fontSize = `${1.5}rem`; // Base size reduced to 1.5rem
+            
+            // --- Enhanced Color Palette ---
+            const palettes = [
+                '255, 154, 158', // Pink
+                '250, 208, 196', // Peach
+                '161, 140, 209', // Lavender
+                '251, 194, 235', // Light Purple
+                '143, 211, 244', // Soft Blue
+                '255, 255, 255'  // White
+            ];
+            const baseColor = palettes[Math.floor(Math.random() * palettes.length)];
+            
+            // Highlight special words
+            const specialWords = ['爱我', '幸福', '未来可期', '越来越美丽', '岁岁平安', '诸事顺遂'];
+            if (specialWords.includes(word)) {
+                el.style.color = `rgba(255, 215, 0, ${opacity})`; // Gold
+                el.style.fontSize = `${2.0}rem`; // Larger
+                el.style.textShadow = '0 0 20px rgba(255, 215, 0, 0.6)';
+                el.style.fontWeight = '900';
+            } else {
+                el.style.color = `rgba(${baseColor}, ${opacity})`;
+            }
+
+            el.style.filter = `blur(${blurAmount}px)`;
+            el.style.zIndex = zIndex;
+            
+            container.appendChild(el);
+            
+            const pos = getRandomPosition(el);
+            el.style.left = `${pos.x}px`;
+            el.style.top = `${pos.y}px`;
+
+            // Random movement direction for "floating in space" feel
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 100 + Math.random() * 200; // Larger range of movement
+            const moveX = Math.cos(angle) * distance;
+            const moveY = Math.sin(angle) * distance;
+            const rotate = (Math.random() - 0.5) * 60; // -30 to +30 deg rotation
+
+            // Custom Animation
+            const anim = el.animate([
+                { 
+                    opacity: 0, 
+                    transform: `scale(0) translate3d(0, 0, 0) rotate(0deg)`, 
+                    offset: 0 
+                },
+                { 
+                    opacity: opacity, 
+                    transform: `scale(${scale}) translate3d(0, 0, 0) rotate(${rotate * 0.2}deg)`, 
+                    offset: 0.1 
+                },
+                { 
+                    opacity: opacity, 
+                    transform: `scale(${scale}) translate3d(${moveX * 0.8}px, ${moveY * 0.8}px, 0) rotate(${rotate}deg)`, 
+                    offset: 0.8 
+                },
+                { 
+                    opacity: 0, 
+                    transform: `scale(${scale * 1.2}) translate3d(${moveX}px, ${moveY}px, 50px) rotate(${rotate * 1.5}deg)`, 
+                    offset: 1 
+                }
+            ], {
+                duration: 6000 + Math.random() * 4000, // 6-10 seconds duration
+                easing: 'cubic-bezier(0.3, 0, 0.7, 1)',
+                fill: 'forwards'
+            });
+
+            // Interactive: Pause on hover
+            el.addEventListener('mouseenter', () => {
+                anim.pause();
+                // Bring to front and clear blur on hover
+                el.style.zIndex = 2000;
+                el.style.filter = 'blur(0px)';
+                el.style.textShadow = '0 0 20px rgba(255,255,255,0.8), 0 0 40px #ff6b81';
+            });
+            el.addEventListener('mouseleave', () => {
+                anim.play();
+                el.style.zIndex = zIndex;
+                el.style.filter = `blur(${blurAmount}px)`;
+                el.style.textShadow = '';
+            });
+            
+            // Interactive: Click to explode
+            el.addEventListener('click', (e) => {
+                e.stopPropagation(); // prevent body click
+                createHeart(e.clientX, e.clientY);
+                // Maybe change word content or color?
+                el.style.color = '#ff6b81';
+                el.textContent = '❤ ' + word + ' ❤';
+            });
+
+            anim.onfinish = () => {
+                if(el.parentNode) el.parentNode.removeChild(el);
+            };
+
+            setTimeout(showNextWord, 50); 
+        }
+
+        setTimeout(showNextWord, 100);
+
+        // Title interaction
+        title.addEventListener('click', (e) => {
+            e.stopPropagation();
+            createHeart(e.clientX, e.clientY);
+            // Shake effect
+            title.animate([
+                { transform: 'translateX(0)' },
+                { transform: 'translateX(-10px)' },
+                { transform: 'translateX(10px)' },
+                { transform: 'translateX(0)' }
+            ], { duration: 300 });
+        });
+
+        // --- New Visual Effects Logic ---
+
+        // 1. Falling Snow
+        function createSnowflake() {
+            const snowflake = document.createElement('div');
+            snowflake.classList.add('snowflake');
+            snowflake.textContent = ['❄', '❅', '❆', '•'][Math.floor(Math.random() * 4)];
+            snowflake.style.left = Math.random() * 100 + 'vw';
+            snowflake.style.opacity = Math.random() * 0.7 + 0.3;
+            
+            const size = Math.random() * 15 + 10;
+            snowflake.style.fontSize = size + 'px';
+            
+            const duration = Math.random() * 5 + 5; // 5-10s
+            snowflake.style.animationDuration = duration + 's';
+            
+            // Random sway
+            snowflake.style.animationTimingFunction = 'ease-in-out';
+            
+            document.body.appendChild(snowflake);
+            
+            setTimeout(() => {
+                snowflake.remove();
+            }, duration * 1000);
+        }
+        setInterval(createSnowflake, 300); // New flake every 300ms
+
+        // 2. Shooting Stars
+        function createShootingStar() {
+            const star = document.createElement('div');
+            star.classList.add('shooting-star');
+            // Start from top-right or top-center area mostly
+            star.style.top = Math.random() * 40 + 'vh'; 
+            star.style.left = (Math.random() * 60 + 40) + 'vw'; 
+            document.body.appendChild(star);
+            
+            setTimeout(() => {
+                star.remove();
+            }, 3000);
+        }
+        
+        function scheduleShootingStar() {
+            // Random interval between 1s and 4s
+            const delay = Math.random() * 3000 + 1000;
+            setTimeout(() => {
+                createShootingStar();
+                scheduleShootingStar();
+            }, delay);
+        }
+        scheduleShootingStar();
+        
+        // 3. Mouse Drag/Move Enhanced Trail
+        // ... (logic handled in mousemove listener above)
+
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const startBtn = document.getElementById('start-btn');
+
+        // Start Button Logic
+        startBtn.addEventListener('click', () => {
+            // Fade out welcome screen
+            welcomeScreen.style.opacity = '0';
+            setTimeout(() => {
+                welcomeScreen.remove();
+            }, 1000);
+            
+            // Optional: Create a burst of hearts
+            createHeart(window.innerWidth / 2, window.innerHeight / 2);
+        });
+
+    </script>
+</body>
+</html>
