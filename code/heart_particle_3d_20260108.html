@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Heart Particle Animation</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%); /* Deep blue-ish gradient */
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+    <!-- Import Map for cleaner Three.js imports and Addons -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from 'three';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // 1. Scene Setup
+        const scene = new THREE.Scene();
+        // Camera Intro Animation
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        // Initial far position for fly-in
+        let introTime = 0;
+        const introDuration = 200; // frames roughly
+        
+        camera.position.z = 100;
+        camera.position.y = 20;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        // Tone mapping helps with bloom to prevent washout
+        renderer.toneMapping = THREE.ReinhardToneMapping;
+        document.body.appendChild(renderer.domElement);
+
+        // --- Post Processing (Bloom) ---
+        const renderScene = new RenderPass(scene, camera);
+        
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloomPass.threshold = 0.1; // Slightly higher threshold to keep dark areas clean
+        bloomPass.strength = 0.4; // Reduced intensity (was 1.2) to make text clearer
+        bloomPass.radius = 0.3; // Reduced radius (was 0.5) for sharper glow
+
+        const composer = new EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
+        
+        // --- Mouse Interaction Setup ---
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetRotationX = 0;
+        let targetRotationY = 0;
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+
+        document.addEventListener('mousemove', onDocumentMouseMove);
+
+        function onDocumentMouseMove(event) {
+            mouseX = (event.clientX - windowHalfX) * 0.001;
+            mouseY = (event.clientY - windowHalfY) * 0.001;
+        }
+
+        // 2. Particle System Configuration
+        
+        // Helper to create a soft glow texture
+        function getTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const context = canvas.getContext('2d');
+            // Radial gradient for soft orb look
+            const gradient = context.createRadialGradient(16, 16, 0, 16, 16, 16);
+            gradient.addColorStop(0, 'rgba(255,255,255,1)');
+            gradient.addColorStop(0.2, 'rgba(255,255,255,0.8)');
+            gradient.addColorStop(0.5, 'rgba(255,255,255,0.2)');
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, 32, 32);
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
+        }
+        
+        const particleTexture = getTexture();
+
+        const particleCount = 15000; // Total number of particles
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const targetPositions = new Float32Array(particleCount * 3); // To store target shape positions
+        const colors = new Float32Array(particleCount * 3);
+        
+        // Initial random positions (scattered)
+        for (let i = 0; i < particleCount; i++) {
+            positions[i * 3] = (Math.random() - 0.5) * 100;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+            
+            // Initial color (white-ish)
+            colors[i * 3] = 1;
+            colors[i * 3 + 1] = 1;
+            colors[i * 3 + 2] = 1;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: 0.25, // Increased size slightly to account for texture transparency
+            map: particleTexture,
+            vertexColors: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false, // Better for transparency
+            transparent: true,
+            opacity: 0.8
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        // --- Ground Particles Setup ---
+        const groundParticleCount = 6000;
+        const groundGeometry = new THREE.BufferGeometry();
+        const groundPositions = new Float32Array(groundParticleCount * 3);
+        const groundColors = new Float32Array(groundParticleCount * 3);
+
+        for (let i = 0; i < groundParticleCount; i++) {
+            // Distribution: Circular with density bias towards center
+            const angle = Math.random() * Math.PI * 2;
+            // r varies to create a spread, concentrated in middle
+            // Using power to bias towards 0
+            // Reduced radius to 11 to match heart width better (Heart width is approx 16*0.5*2 = 16, radius 8)
+            const r = Math.pow(Math.random(), 1.5) * 11; 
+            
+            const x = Math.cos(angle) * r;
+            const z = Math.sin(angle) * r;
+            
+            // Mound shape: Height decays with distance from center
+            // Heart bottom is roughly at y = -8.5
+            const dist = Math.sqrt(x*x + z*z);
+            // Height function: Gaussian-ish, steeper decay
+            const height = 4.5 * Math.exp(-dist * 0.25); 
+            
+            // Add roughness/noise to the pile
+            // Base level set so peak (-13.5 + 4.5 = -9) is just below heart tip
+            const y = -13.5 + height + (Math.random() - 0.5) * 1.0;
+
+            groundPositions[i * 3] = x;
+            groundPositions[i * 3 + 1] = y;
+            groundPositions[i * 3 + 2] = z;
+
+            // Colors: Blue, Cyan, White
+            const colRand = Math.random();
+            if (colRand < 0.33) {
+                // Blue
+                groundColors[i * 3] = 0.1;
+                groundColors[i * 3 + 1] = 0.2;
+                groundColors[i * 3 + 2] = 1.0;
+            } else if (colRand < 0.66) {
+                // Cyan
+                groundColors[i * 3] = 0.0;
+                groundColors[i * 3 + 1] = 1.0;
+                groundColors[i * 3 + 2] = 1.0;
+            } else {
+                // White
+                groundColors[i * 3] = 0.9;
+                groundColors[i * 3 + 1] = 0.9;
+                groundColors[i * 3 + 2] = 1.0;
+            }
+        }
+
+        groundGeometry.setAttribute('position', new THREE.BufferAttribute(groundPositions, 3));
+        groundGeometry.setAttribute('color', new THREE.BufferAttribute(groundColors, 3));
+
+        const groundMaterial = new THREE.PointsMaterial({
+            size: 0.3,
+            map: particleTexture,
+            vertexColors: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            transparent: true,
+            opacity: 0.6
+        });
+
+        const groundParticles = new THREE.Points(groundGeometry, groundMaterial);
+        scene.add(groundParticles);
+
+
+        // --- Starry Background Setup ---
+        const starCount = 2000;
+        const starGeometry = new THREE.BufferGeometry();
+        const starPositions = new Float32Array(starCount * 3);
+        
+        for(let i=0; i<starCount; i++) {
+            const x = (Math.random() - 0.5) * 200; // Wide spread
+            const y = (Math.random() - 0.5) * 200;
+            const z = (Math.random() - 0.5) * 200 - 50; // Push back a bit
+            starPositions[i*3] = x;
+            starPositions[i*3+1] = y;
+            starPositions[i*3+2] = z;
+        }
+        
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.5,
+            map: particleTexture,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            sizeAttenuation: true
+        });
+        
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+
+        // --- Shooting Star System ---
+        const shootingStarCount = 10;
+        const shootingStarGeometry = new THREE.BufferGeometry();
+        const shootingStarPositions = new Float32Array(shootingStarCount * 3);
+        const shootingStarVelocities = []; // Store velocity vectors
+        const shootingStarLife = new Float32Array(shootingStarCount); // Life 0 to 1
+
+        for(let i=0; i<shootingStarCount; i++) {
+            resetShootingStar(i);
+            // Stagger starts
+            shootingStarLife[i] = Math.random(); 
+        }
+
+        function resetShootingStar(i) {
+             // Start far away
+             shootingStarPositions[i*3] = (Math.random() - 0.5) * 300;
+             shootingStarPositions[i*3+1] = 100 + Math.random() * 50; // High up
+             shootingStarPositions[i*3+2] = (Math.random() - 0.5) * 100 - 50;
+             
+             // Speed towards bottom left or right
+             const speed = 2 + Math.random() * 3;
+             const angle = Math.PI + (Math.random() - 0.5) * 0.5; // Downwards
+             
+             shootingStarVelocities[i] = {
+                 x: Math.cos(angle) * speed,
+                 y: Math.sin(angle) * speed,
+                 z: (Math.random() - 0.5) * speed
+             };
+             shootingStarLife[i] = 0;
+        }
+
+        shootingStarGeometry.setAttribute('position', new THREE.BufferAttribute(shootingStarPositions, 3));
+        const shootingStarMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.8,
+            map: particleTexture,
+            transparent: true,
+            opacity: 1.0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        const shootingStars = new THREE.Points(shootingStarGeometry, shootingStarMaterial);
+        scene.add(shootingStars);
+
+        // 3. Heart Shape Calculation
+        // Heart curve parametric equations
+        // x = 16sin^3(t)
+        // y = 13cos(t) - 5cos(2t) - 2cos(3t) - cos(4t)
+        function getHeartPosition(t) {
+            const x = 16 * Math.pow(Math.sin(t), 3);
+            const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+            return { x: x, y: y };
+        }
+
+        // Generate target positions for the Heart
+        const heartTargets = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount; i++) {
+            // Distribute t to cover the curve, add randomness for volume
+            const t = Math.random() * Math.PI * 2;
+            const pos = getHeartPosition(t);
+            
+            // Add some 3D depth and randomness to fill the heart volume
+            const r = Math.random(); // Random radius factor for filling inside
+            const z = (Math.random() - 0.5) * 5; // Thickness
+            
+            // Scale down a bit to fit screen
+            const scale = 0.5;
+            
+            // We want particles to be concentrated on the shell but also some inside
+            // Using a mix of shell and volume distribution
+            const mix = Math.random();
+            let tx, ty, tz;
+            
+            if (mix > 0.2) {
+                // Mostly on the curve with slight scatter
+                tx = pos.x * scale + (Math.random() - 0.5) * 0.5;
+                ty = pos.y * scale + (Math.random() - 0.5) * 0.5;
+                tz = z;
+            } else {
+                // Inside volume
+                const t2 = Math.random() * Math.PI * 2;
+                const pos2 = getHeartPosition(t2);
+                const r2 = Math.random();
+                tx = pos2.x * scale * r2;
+                ty = pos2.y * scale * r2;
+                tz = (Math.random() - 0.5) * 5 * r2;
+            }
+
+            heartTargets[i * 3] = tx;
+            heartTargets[i * 3 + 1] = ty;
+            heartTargets[i * 3 + 2] = tz;
+        }
+
+        // 4. "ryy" Text Matrix
+        // We will generate points that roughly form "ryy". 
+        // This is a procedural generation of text shapes.
+        const textTargets = new Float32Array(particleCount * 3);
+        
+        // Helper to define character strokes roughly
+        function getCharPoint(char, progress) {
+            let x = 0, y = 0;
+            if (char === 'r') {
+                 if (progress < 0.6) { // Vertical line
+                     const p = progress / 0.6;
+                     x = -1.5;
+                     y = -2 + p * 3; // -2 to 1
+                 } else { // Top curve
+                     const p = (progress - 0.6) / 0.4;
+                     // Curve from (-1.5, 1) to (0.5, 1.5)
+                     const angle = p * Math.PI / 2;
+                     x = -1.5 + Math.sin(angle) * 2;
+                     y = 0.5 + Math.cos(angle) * 1;
+                 }
+            } else if (char === 'y') {
+                if (progress < 0.4) { // Left stroke (short)
+                    const p = progress / 0.4;
+                    // (-1.5, 1.5) -> (0, 0)
+                    x = -1.5 + p * 1.5;
+                    y = 1.5 - p * 1.5;
+                } else { // Right stroke (long)
+                    const p = (progress - 0.4) / 0.6;
+                    // (1.5, 1.5) -> (-1.5, -2.5)
+                    x = 1.5 - p * 3;
+                    y = 1.5 - p * 4;
+                }
+            }
+            return {x, y};
+        }
+
+        const chars = ['r', 'y', 'y'];
+        const charOffset = [-5, 0, 5]; // X offsets for each char
+
+        for (let i = 0; i < particleCount; i++) {
+            const charIndex = i % 3; // Distribute particles among chars
+            const char = chars[charIndex];
+            const progress = Math.random(); // Random point along the stroke
+            
+            const point = getCharPoint(char, progress);
+            
+            // Apply offset and randomness
+            const tx = point.x + charOffset[charIndex] + (Math.random() - 0.5) * 0.3;
+            const ty = point.y + (Math.random() - 0.5) * 0.3;
+            const tz = (Math.random() - 0.5) * 1.5; // Thickness
+
+            textTargets[i * 3] = tx;
+            textTargets[i * 3 + 1] = ty;
+            textTargets[i * 3 + 2] = tz;
+        }
+
+
+        // 5. Animation State
+        let state = 'heart'; // 'heart', 'text', 'scatter'
+        let time = 0;
+        
+        // Colors for Heart (Red/Pink) and Text (Gold/White)
+        const heartColor = new THREE.Color(0xff0055);
+        const textColor = new THREE.Color(0xffd700);
+        
+        // Interaction Physics
+        let shockwaveActive = false;
+        let shockwaveTime = 0;
+
+        // --- Floating Particles (Energy rising) ---
+        const floatCount = 200;
+        const floatGeometry = new THREE.BufferGeometry();
+        const floatPositions = new Float32Array(floatCount * 3);
+        const floatSpeeds = new Float32Array(floatCount);
+        
+        for(let i=0; i<floatCount; i++) {
+            floatPositions[i*3] = (Math.random() - 0.5) * 15; // Spread x
+            floatPositions[i*3+1] = -10 + Math.random() * 10; // Start varying heights
+            floatPositions[i*3+2] = (Math.random() - 0.5) * 15; // Spread z
+            floatSpeeds[i] = 0.02 + Math.random() * 0.05; // Random upward speed
+        }
+        floatGeometry.setAttribute('position', new THREE.BufferAttribute(floatPositions, 3));
+        const floatMaterial = new THREE.PointsMaterial({
+            color: 0x00ffff,
+            size: 0.3,
+            map: particleTexture,
+            transparent: true,
+            opacity: 0.5,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+        const floatParticles = new THREE.Points(floatGeometry, floatMaterial);
+        scene.add(floatParticles);
+
+
+        function animateParticles() {
+            const currentPositions = particles.geometry.attributes.position.array;
+            const currentColors = particles.geometry.attributes.color.array;
+            
+            // Dynamic Color Cycling
+            // Heart: Cycle around Pink/Red (Hue 340-360/0-10)
+            const timeHue = time * 0.1;
+            // Base heart color
+            const baseHeartHue = (0.95 + Math.sin(timeHue) * 0.05) % 1;
+            heartColor.setHSL(baseHeartHue, 1.0, 0.5);
+            
+            // Text: Cycle around Gold/Yellow (Hue 45-55)
+            textColor.setHSL(0.12 + Math.sin(timeHue * 1.5) * 0.02, 1.0, 0.5);
+
+            // Text Scan Effect Calculation
+            let scanPos = -100; // Off
+            if (state === 'text') {
+                // Scan moves from left (-10) to right (10) periodically
+                // Period: 3 seconds
+                const scanTime = time * 2; 
+                // Sawtooth wave approx
+                scanPos = ((scanTime % 10) - 5) * 3; // Range -15 to 15
+            }
+
+            // Heartbeat Calculation
+            let beatScale = 1.0;
+            if (state === 'heart') {
+                // Heartbeat rhythm: sharp expansion, slow release
+                // Function: sin^64(x) gives sharp spikes
+                const beat = Math.pow(Math.sin(time * 3), 64); 
+                beatScale = 1.0 + beat * 0.15; // 15% expansion
+            }
+
+            // Shockwave Calculation
+            let shockRadius = 0;
+            if (shockwaveActive) {
+                shockwaveTime += 0.5;
+                shockRadius = shockwaveTime;
+                if (shockRadius > 50) {
+                    shockwaveActive = false;
+                }
+            }
+
+            let targetArr;
+            let targetColor;
+
+            if (state === 'heart') {
+                targetArr = heartTargets;
+                targetColor = heartColor;
+            } else if (state === 'text') {
+                targetArr = textTargets;
+                targetColor = textColor;
+            } else {
+                // Scatter logic could be dynamic, but for now let's just use heartTargets with noise
+                targetArr = heartTargets; 
+                targetColor = heartColor;
+            }
+
+            // Lerp speed
+            const lerpSpeed = 0.03;
+
+            for (let i = 0; i < particleCount; i++) {
+                // Position interpolation
+                const px = currentPositions[i * 3];
+                const py = currentPositions[i * 3 + 1];
+                const pz = currentPositions[i * 3 + 2];
+
+                const tx = targetArr[i * 3];
+                const ty = targetArr[i * 3 + 1];
+                const tz = targetArr[i * 3 + 2] * beatScale; // Apply beat scale
+
+                // Add some noise based on time for "breathing" or "sparkle"
+                const noise = Math.sin(time * 2 + i) * 0.02;
+
+                // Shockwave Displacement
+                let dx_shock = 0, dy_shock = 0, dz_shock = 0;
+                if (shockwaveActive) {
+                    const pdx = px; // Distance from center (0,0,0) approx
+                    const pdy = py;
+                    const pdz = pz;
+                    const pDist = Math.sqrt(pdx*pdx + pdy*pdy + pdz*pdz);
+                    
+                    // If particle is near the shockwave ring
+                    const distToWave = Math.abs(pDist - shockRadius);
+                    if (distToWave < 5) {
+                        const force = (1 - distToWave / 5) * 2.0; // Strong push
+                        const angleV = Math.atan2(pdy, pdx); // Simple radial push?
+                        // Actually just normalize vector
+                        const nx = pdx / (pDist || 1);
+                        const ny = pdy / (pDist || 1);
+                        const nz = pdz / (pDist || 1);
+                        
+                        dx_shock = nx * force;
+                        dy_shock = ny * force;
+                        dz_shock = nz * force;
+                    }
+                }
+
+                if (state === 'scatter') {
+                    // Explode effect
+                     currentPositions[i * 3] += (Math.random() - 0.5) * 0.5;
+                     currentPositions[i * 3 + 1] += (Math.random() - 0.5) * 0.5;
+                     currentPositions[i * 3 + 2] += (Math.random() - 0.5) * 0.5;
+                } else {
+                    // Swirl Effect Calculation
+                    // Vector to target
+                    const dx = tx - px;
+                    const dy = ty - py;
+                    const dz = tz - pz;
+                    
+                    // Simple swirl: force perpendicular to position
+                    // We only apply swirl if distance is significant to avoid jitter at end
+                    const distSq = dx*dx + dy*dy + dz*dz;
+                    
+                    if (distSq > 0.1) {
+                        const swirlFactor = 0.01;
+                        // Cross product-ish force (rotation around Y axis for example)
+                        // x' = z, z' = -x
+                        const sx = pz * swirlFactor;
+                        const sz = -px * swirlFactor;
+                        
+                        currentPositions[i * 3] += dx * lerpSpeed + sx + noise + dx_shock;
+                        currentPositions[i * 3 + 1] += dy * lerpSpeed + noise + dy_shock;
+                        currentPositions[i * 3 + 2] += dz * lerpSpeed + sz + noise + dz_shock;
+                    } else {
+                         // Close enough, just standard lerp
+                        currentPositions[i * 3] += dx * lerpSpeed + noise + dx_shock;
+                        currentPositions[i * 3 + 1] += dy * lerpSpeed + noise + dy_shock;
+                        currentPositions[i * 3 + 2] += dz * lerpSpeed + noise + dz_shock;
+                    }
+                }
+                
+                // Color interpolation
+                let r = targetColor.r;
+                let g = targetColor.g;
+                let b = targetColor.b;
+
+                // Gradient for Heart: Top lighter, Bottom darker
+                if (state === 'heart') {
+                     // ty is roughly -16 to +2 (scaled 0.5 -> -8 to +1)
+                     // Let's say range is -10 to 2
+                     const hRatio = (ty + 10) / 12; // 0 to 1
+                     // Shift Hue slightly or Lightness
+                     // Let's just boost Lightness for top
+                     // r,g,b are 0-1
+                     r = r * (0.5 + hRatio * 0.8);
+                     g = g * (0.5 + hRatio * 0.8);
+                     b = b * (0.5 + hRatio * 0.8);
+                } else if (state === 'text') {
+                    // Text Scan Effect
+                    // If particle X is near scanPos, boost brightness to white
+                    // px is current position
+                    const distToScan = Math.abs(currentPositions[i * 3] - scanPos);
+                    if (distToScan < 1.5) {
+                        const boost = (1.5 - distToScan) / 1.5; // 0 to 1
+                        // Add white
+                        r += boost * 0.8;
+                        g += boost * 0.8;
+                        b += boost * 0.8;
+                    }
+                }
+
+                currentColors[i * 3] += (r - currentColors[i * 3]) * 0.05;
+                currentColors[i * 3 + 1] += (g - currentColors[i * 3 + 1]) * 0.05;
+                currentColors[i * 3 + 2] += (b - currentColors[i * 3 + 2]) * 0.05;
+            }
+
+            particles.geometry.attributes.position.needsUpdate = true;
+            particles.geometry.attributes.color.needsUpdate = true;
+            
+            // Animate Floating Particles
+            const fPos = floatParticles.geometry.attributes.position.array;
+            for(let i=0; i<floatCount; i++) {
+                fPos[i*3+1] += floatSpeeds[i]; // Move up
+                
+                // Reset if too high
+                if (fPos[i*3+1] > 5) {
+                    fPos[i*3+1] = -10;
+                    fPos[i*3] = (Math.random() - 0.5) * 15;
+                    fPos[i*3+2] = (Math.random() - 0.5) * 15;
+                }
+            }
+            floatParticles.geometry.attributes.position.needsUpdate = true;
+
+            // Animate Shooting Stars
+            const sPos = shootingStars.geometry.attributes.position.array;
+            for(let i=0; i<shootingStarCount; i++) {
+                if (shootingStarLife[i] > 0) {
+                    sPos[i*3] += shootingStarVelocities[i].x;
+                    sPos[i*3+1] += shootingStarVelocities[i].y;
+                    sPos[i*3+2] += shootingStarVelocities[i].z;
+                    
+                    // Check bounds (if below ground or too far)
+                    if (sPos[i*3+1] < -50 || Math.abs(sPos[i*3]) > 200) {
+                        shootingStarLife[i] = 0; // Dead, wait for reset
+                    }
+                } else {
+                    // Random respawn chance
+                    if (Math.random() < 0.01) {
+                        resetShootingStar(i);
+                        shootingStarLife[i] = 1; // Alive
+                    }
+                }
+            }
+            shootingStars.geometry.attributes.position.needsUpdate = true;
+        }
+
+        // Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01;
+            
+            // Intro Camera Animation
+            if (introTime < introDuration) {
+                introTime++;
+                const progress = introTime / introDuration;
+                // Ease out cubic
+                const ease = 1 - Math.pow(1 - progress, 3);
+                
+                // Interpolate from (0, 20, 100) to (0, -6, 30)
+                camera.position.z = 100 - (100 - 30) * ease;
+                camera.position.y = 20 - (20 - (-6)) * ease;
+                // Add a little spiral rotation during intro
+                camera.rotation.z = (1 - ease) * 0.5;
+            } else {
+                camera.rotation.z = 0; // Ensure straight
+            }
+            
+            // Interaction: Smoothly interpolate rotation towards mouse position
+            // Base rotation + mouse influence
+            const baseRotY = Math.sin(time * 0.2) * 0.2;
+            const baseRotX = Math.sin(time * 0.1) * 0.1;
+            
+            // Damping for smooth mouse movement
+            targetRotationX += (mouseY - targetRotationX) * 0.05;
+            targetRotationY += (mouseX - targetRotationY) * 0.05;
+
+            particles.rotation.y = baseRotY + targetRotationY * 2; // Amplify mouse effect
+            particles.rotation.x = baseRotX + targetRotationX * 2;
+
+            // Ground and Stars also react slightly for depth
+            groundParticles.rotation.y = time * 0.05 + targetRotationY * 0.5;
+            stars.rotation.y = time * 0.02 + targetRotationY * 0.1;
+            stars.rotation.x = time * 0.01 + targetRotationX * 0.1;
+
+            animateParticles();
+            
+            // Use composer instead of renderer
+            composer.render();
+        }
+
+        animate();
+
+        // Interaction: Click to toggle state
+        window.addEventListener('click', () => {
+            if (state === 'heart') state = 'text';
+            else state = 'heart';
+            
+            // Trigger Shockwave
+            shockwaveActive = true;
+            shockwaveTime = 0;
+            
+            // Reset interval timer on manual click so it doesn't switch immediately after
+            clearInterval(autoSwitch);
+            autoSwitch = setInterval(switchState, 10000);
+        });
+
+        // Cycle states automatically
+        function switchState() {
+            if (state === 'heart') state = 'text';
+            else if (state === 'text') state = 'heart';
+            
+            // Trigger Shockwave on auto switch too? Maybe subtle one?
+            // Let's keep big shockwave for click only for now to make it special
+            // Or maybe a small one
+            shockwaveActive = true;
+            shockwaveTime = 0;
+        }
+        
+        let autoSwitch = setInterval(switchState, 10000); // Switch every 5 seconds
+
+        // 6. Responsive
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            
+            renderer.setSize(width, height);
+            composer.setSize(width, height); // Update composer size
+            
+            // Update bloom pass resolution
+            // bloomPass.resolution.set(width, height); // Some versions require this, usually handled by setSize
+        });
+
+    </script>
+</body>
+</html>
