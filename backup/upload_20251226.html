@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Files - Ryy's Space</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+TC:wght@300;400;700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ff99ac;
+            --secondary-color: #b39ddb;
+            --dark-bg: #fff0f5;
+            --card-bg: #ffffff;
+            --text-color: #ff6b81;
+            --light-text: #666666;
+        }
+
+        body {
+            font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: var(--light-text);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #fff0f5 0%, #ffe6eb 100%);
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(255, 153, 172, 0.15);
+        }
+
+        h1 {
+            margin: 0;
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        main {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .upload-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        /* Flexbox for date inputs */
+        .date-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .date-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        .file-drop-zone {
+            border: 2px dashed var(--secondary-color);
+            padding: 2rem;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 1rem;
+        }
+
+        .file-drop-zone:hover {
+            background-color: #f9f9f9;
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: 100%;
+            font-family: 'Ma Shan Zheng', cursive;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .btn:hover {
+            background: #ff7e96;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        
+        .config-section {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .toggle-config {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            cursor: pointer;
+            text-decoration: underline;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+        
+        .hidden {
+            display: none;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Upload to Cloud</h1>
+    </header>
+
+    <main>
+        <a href="index.html" class="back-link">← Back to Home</a>
+        
+        <div class="upload-card">
+            <div class="toggle-config" onclick="toggleConfig()">⚙️ Configure GitHub Settings</div>
+            
+            <div id="configSection" class="config-section hidden">
+                <div class="form-group">
+                    <label>GitHub Personal Access Token (or Alias)</label>
+                    <input type="password" id="ghToken" placeholder="Enter token or alias">
+                </div>
+                <div class="form-group">
+                    <label>Owner (Username)</label>
+                    <input type="text" id="ghOwner" value="Ryan-AYuan">
+                </div>
+                <div class="form-group">
+                    <label>Repository Name</label>
+                    <input type="text" id="ghRepo" value="ryy">
+                </div>
+                <div class="form-group">
+                    <label>Branch</label>
+                    <input type="text" id="ghBranch" value="main">
+                </div>
+                <button class="btn" onclick="saveConfig()" style="width: auto; padding: 8px 20px; font-size: 1rem;">Save Settings</button>
+            </div>
+
+            <div class="form-group">
+                <label>Target Folder</label>
+                <select id="targetFolder" onchange="toggleDateInputs()">
+                    <option value="bgm">BGM (Music)</option>
+                    <option value="code">Code</option>
+                    <option value="photo">Photo</option>
+                </select>
+            </div>
+
+            <div id="dateInputs" class="hidden date-row">
+                <div class="form-group">
+                    <label>Year</label>
+                    <input type="number" id="uploadYear" placeholder="YYYY">
+                </div>
+                <div class="form-group">
+                    <label>Month</label>
+                    <select id="uploadMonth">
+                        <option value="01">January (01)</option>
+                        <option value="02">February (02)</option>
+                        <option value="03">March (03)</option>
+                        <option value="04">April (04)</option>
+                        <option value="05">May (05)</option>
+                        <option value="06">June (06)</option>
+                        <option value="07">July (07)</option>
+                        <option value="08">August (08)</option>
+                        <option value="09">September (09)</option>
+                        <option value="10">October (10)</option>
+                        <option value="11">November (11)</option>
+                        <option value="12">December (12)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="file-drop-zone" onclick="document.getElementById('fileInput').click()">
+                <p>Click to select files</p>
+                <input type="file" id="fileInput" multiple style="display: none" onchange="updateFileList()">
+            </div>
+            <div id="fileList" style="margin-bottom: 1rem; font-size: 0.9rem;"></div>
+
+            <button class="btn" id="uploadBtn" onclick="uploadFiles()">Start Upload</button>
+            
+            <div id="statusArea" class="status"></div>
+        </div>
+    </main>
+
+    <script>
+        // Load config from localStorage
+        function loadConfig() {
+            document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
+            document.getElementById('ghOwner').value = localStorage.getItem('gh_owner') || '';
+            document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || '';
+            const branch = localStorage.getItem('gh_branch');
+            if (branch) document.getElementById('ghBranch').value = branch;
+            
+            if (!localStorage.getItem('gh_token')) {
+                document.getElementById('configSection').classList.remove('hidden');
+            }
+        }
+
+        function saveConfig() {
+            localStorage.setItem('gh_token', document.getElementById('ghToken').value);
+            localStorage.setItem('gh_owner', document.getElementById('ghOwner').value);
+            localStorage.setItem('gh_repo', document.getElementById('ghRepo').value);
+            localStorage.setItem('gh_branch', document.getElementById('ghBranch').value);
+            alert('Settings saved!');
+            document.getElementById('configSection').classList.add('hidden');
+        }
+
+        function toggleConfig() {
+            document.getElementById('configSection').classList.toggle('hidden');
+        }
+
+        function toggleDateInputs() {
+            const folder = document.getElementById('targetFolder').value;
+            const dateInputs = document.getElementById('dateInputs');
+            if (folder === 'photo') {
+                dateInputs.classList.remove('hidden');
+            } else {
+                dateInputs.classList.add('hidden');
+            }
+        }
+
+        function initDateInputs() {
+            const now = new Date();
+            document.getElementById('uploadYear').value = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('uploadMonth').value = month;
+        }
+
+        function updateFileList() {
+            const input = document.getElementById('fileInput');
+            const list = document.getElementById('fileList');
+            if (input.files.length > 0) {
+                list.innerHTML = `Selected ${input.files.length} file(s):<br>` + 
+                    Array.from(input.files).map(f => `- ${f.name}`).join('<br>');
+            } else {
+                list.innerHTML = '';
+            }
+        }
+
+        async function uploadFiles() {
+            const token = document.getElementById('ghToken').value;
+            const owner = document.getElementById('ghOwner').value;
+            const repo = document.getElementById('ghRepo').value;
+            const branch = document.getElementById('ghBranch').value;
+            const folder = document.getElementById('targetFolder').value;
+            const files = document.getElementById('fileInput').files;
+            const statusArea = document.getElementById('statusArea');
+            const btn = document.getElementById('uploadBtn');
+
+            if (!token || !owner || !repo) {
+                statusArea.className = 'status error';
+                statusArea.textContent = 'Please configure GitHub settings first.';
+                document.getElementById('configSection').classList.remove('hidden');
+                return;
+            }
+
+            if (files.length === 0) {
+                statusArea.className = 'status error';
+                statusArea.textContent = 'Please select files to upload.';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Checking files...';
+            statusArea.style.display = 'none';
+
+            let successCount = 0;
+            let skippedCount = 0;
+            let errors = [];
+            
+            // Determine effective target directory
+            let targetDir = folder;
+            if (folder === 'photo') {
+                const year = document.getElementById('uploadYear').value;
+                const month = document.getElementById('uploadMonth').value;
+                targetDir = `${folder}/${year}/${month}`;
+            }
+
+            // Fetch existing files in the target folder to check for duplicates
+            const dirUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${targetDir}?ref=${branch}`;
+            let existingFiles = new Map(); // filename -> sha
+
+            try {
+                const dirResp = await fetch(dirUrl, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (dirResp.ok) {
+                    const data = await dirResp.json();
+                    if (Array.isArray(data)) {
+                        data.forEach(item => existingFiles.set(item.name, item.sha));
+                    }
+                } else if (dirResp.status !== 404) {
+                    console.warn("Could not list directory, status:", dirResp.status);
+                }
+            } catch (e) {
+                console.warn("Error fetching directory listing:", e);
+            }
+
+            btn.textContent = 'Uploading...';
+
+            // Batch check for duplicates
+            let duplicates = [];
+            for (let file of files) {
+                if (existingFiles.has(file.name)) {
+                    duplicates.push(file.name);
+                }
+            }
+
+            if (duplicates.length > 0) {
+                const maxDisplay = 10;
+                let fileListStr = duplicates.slice(0, maxDisplay).join('\n');
+                if (duplicates.length > maxDisplay) {
+                    fileListStr += `\n...and ${duplicates.length - maxDisplay} more`;
+                }
+                
+                const msg = `以下文件已存在 (The following files already exist):\n\n${fileListStr}\n\n上傳重複文件將自動覆蓋原有內容 (Uploading duplicate files will automatically overwrite original content).\n是否繼續？ (Continue?)`;
+                
+                if (!confirm(msg)) {
+                    btn.disabled = false;
+                    btn.textContent = 'Start Upload';
+                    statusArea.className = 'status';
+                    statusArea.textContent = 'Upload cancelled.';
+                    statusArea.style.display = 'block';
+                    return;
+                }
+            }
+ 
+            for (let file of files) {
+                try {
+                    let sha = null;
+                    
+                    if (existingFiles.has(file.name)) {
+                        sha = existingFiles.get(file.name);
+                    }
+ 
+                    const content = await readFileAsBase64(file);
+                    let targetPath = `${targetDir}/${encodeURIComponent(file.name)}`;
+                    
+                    // Upload
+                    const uploadUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${targetPath}`;
+                    const body = {
+                        message: `Upload ${file.name} via Web Interface`,
+                        content: content,
+                        branch: branch
+                    };
+                    if (sha) body.sha = sha;
+
+                    const putResp = await fetch(uploadUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(body)
+                    });
+
+                    if (!putResp.ok) {
+                        throw new Error(`Failed to upload ${file.name}: ${putResp.statusText}`);
+                    }
+                    successCount++;
+
+                } catch (e) {
+                    console.error(e);
+                    errors.push(`${file.name}: ${e.message}`);
+                }
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Start Upload';
+
+            let msg = [];
+            if (successCount > 0) msg.push(`Successfully uploaded ${successCount} files.`);
+            if (skippedCount > 0) msg.push(`Skipped ${skippedCount} files.`);
+            
+            if (errors.length > 0) {
+                statusArea.className = 'status error';
+                msg.push(`Errors:<br>${errors.join('<br>')}`);
+                statusArea.innerHTML = msg.join('<br>');
+            } else {
+                statusArea.className = 'status success';
+                statusArea.innerHTML = msg.join('<br>');
+            }
+            if (msg.length > 0) statusArea.style.display = 'block';
+        }
+
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    // Remove "data:*/*;base64," prefix
+                    const content = reader.result.split(',')[1];
+                    resolve(content);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Initialize
+        loadConfig();
+        initDateInputs();
+    </script>
+</body>
+</html>
