@@ -87,10 +87,11 @@ window.saveConfig = () => {
 // Helper for authenticated content loading (for private repos)
 // Uses GitHub API Blob endpoint to bypass Raw content CORS issues
 window.loadAuthenticatedImage = async (img, url, blobUrl) => {
-    const token = localStorage.getItem('gh_token');
+    const token = localStorage.getItem('gh_token') || '';
+    const isPat = /^(ghp_|github_pat_)/.test(token);
     
-    // If no token, use the URL as is (browser will try to load it)
-    if (!token) {
+    // Family codes are not GitHub tokens. Public Pages URLs should load directly.
+    if (!isPat) {
         img.src = url;
         return;
     }

@@ -149,12 +149,11 @@ async function fetchGitHubData() {
 
                 if (!siteData.photos[albumId]) siteData.photos[albumId] = [];
 
-                // Construct Raw GitHub URL to ensure images load even if running locally (and file is only on cloud)
-                // Encode path parts to handle spaces/special chars (e.g. &)
-                const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path.split('/').map(encodeURIComponent).join('/')}`;
+                const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+                const pagesUrl = `https://${String(owner).toLowerCase()}.github.io/${repo}/${encodedPath}`;
 
                 siteData.photos[albumId].push({
-                    src: rawUrl,
+                    src: pagesUrl,
                     blobUrl: item.url, // Store API Blob URL for private repo access
                     caption: album.title,
                     filename: filename
@@ -165,11 +164,12 @@ async function fetchGitHubData() {
             // User specified that bgm folder contains mp3 files.
             else if (path.startsWith('bgm/') && path.match(/\.mp3$/i)) {
                 const filename = path.split('/').pop();
-                const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path.split('/').map(encodeURIComponent).join('/')}`;
+                const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+                const pagesUrl = `https://${String(owner).toLowerCase()}.github.io/${repo}/${encodedPath}`;
                 siteData.music.push({
                     title: formatTitle(filename),
-                    src: rawUrl,
-                    blobUrl: item.url // Store API Blob URL for private repo access
+                    src: pagesUrl,
+                    blobUrl: item.url
                 });
             }
         });

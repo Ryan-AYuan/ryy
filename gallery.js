@@ -60,11 +60,13 @@ window.renderGallery = () => {
             item.dataset.index = String(index);
 
             const img = document.createElement('img');
-            img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-            img.dataset.src = photo.src;
-            img.dataset.blobUrl = photo.blobUrl || '';
+            img.src = photo.src;
+            img.loading = 'lazy';
+            img.decoding = 'async';
             img.alt = photo.caption;
             img.className = 'gallery-img';
+            img.dataset.src = photo.src;
+            img.dataset.blobUrl = photo.blobUrl || '';
 
             item.appendChild(img);
             galleryGrid.appendChild(item);
@@ -85,14 +87,13 @@ const observer = new IntersectionObserver((entries) => {
             
             // Handle lazy loading for private repo images
             const img = entry.target.querySelector('img.gallery-img');
-            if (img && img.dataset.src) {
-                // Calls global helper from app.js
+            if (img && img.dataset.src && img.src.startsWith('data:')) {
                 if (window.loadAuthenticatedImage) {
                     window.loadAuthenticatedImage(img, img.dataset.src, img.dataset.blobUrl);
                 } else {
                     img.src = img.dataset.src;
                 }
-                img.removeAttribute('data-src'); // Prevent re-fetch
+                img.removeAttribute('data-src');
             }
 
             observer.unobserve(entry.target);
@@ -117,6 +118,12 @@ const toggleSection = (title, contentClass) => {
     if (section.classList.contains('active')) {
         content.style.maxHeight = content.scrollHeight + "px";
         content.style.opacity = 1;
+        content.querySelectorAll('img.gallery-img').forEach((img) => {
+            if (img.dataset.src) img.src = img.dataset.src;
+        });
+        setTimeout(() => {
+            content.style.maxHeight = content.scrollHeight + "px";
+        }, 350);
     } else {
         content.style.maxHeight = null;
         content.style.opacity = 0;
