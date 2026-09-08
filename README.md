@@ -134,6 +134,17 @@ ryy/
 
 ## 🚀 如何使用與更新 (How to Update)
 
+### 推送程式碼到 GitHub
+
+本機 `git push` 可能因 `github.com` 連線不穩而失敗。請改用專案腳本（會先嘗試 git push，逾時後自動改走 `api.github.com`）：
+
+```bash
+# 首次：複製 .env.example 為 .env，填入 Fine-grained Token（Contents: Read and write）
+python3 scripts/gh-push.py
+```
+
+Token 只放在 `.env`，不要提交。`.gitignore` 已忽略該檔。
+
 您可以選擇以下兩種方式來更新網站內容：
 
 ### 方法一：使用上傳工具 (推薦)
