@@ -73,7 +73,7 @@
             padding: 10px;
             border: 2px solid #eee;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 16px; /* keep 16px to avoid iOS zoom */
             box-sizing: border-box;
             transition: border-color 0.3s;
         }
@@ -96,17 +96,56 @@
         }
 
         .file-drop-zone {
+            position: relative;
             border: 2px dashed var(--secondary-color);
-            padding: 2rem;
+            padding: 2rem 1rem;
+            min-height: 120px;
             text-align: center;
             border-radius: 12px;
             cursor: pointer;
             transition: background 0.3s;
             margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 0.4rem;
+            overflow: hidden;
         }
 
-        .file-drop-zone:hover {
+        .file-drop-zone:hover,
+        .file-drop-zone:active {
             background-color: #f9f9f9;
+        }
+
+        .file-drop-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            font-size: 100px; /* iOS: larger hit target for the native control */
+        }
+
+        .file-drop-hint {
+            pointer-events: none;
+            font-size: 1rem;
+            color: var(--secondary-color);
+        }
+
+        .file-drop-sub {
+            pointer-events: none;
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        @media (max-width: 640px) {
+            header { padding: 1.25rem 0; }
+            h1 { font-size: 1.8rem; }
+            main { margin: 1rem auto; }
+            .upload-card { padding: 1.25rem; }
+            .btn { min-height: 48px; }
         }
 
         .btn {
@@ -229,10 +268,11 @@
                 </div>
             </div>
 
-            <div class="file-drop-zone" onclick="document.getElementById('fileInput').click()">
-                <p>Click to select files</p>
-                <input type="file" id="fileInput" multiple style="display: none" onchange="updateFileList()">
-            </div>
+            <label class="file-drop-zone" for="fileInput">
+                <span class="file-drop-hint" id="dropHint">點擊選擇照片</span>
+                <span class="file-drop-sub" id="dropSub">手機可從相簿選取或拍照；電腦可拖放檔案</span>
+                <input type="file" id="fileInput" multiple accept="image/*" onchange="updateFileList()">
+            </label>
             <div id="fileList" style="margin-bottom: 1rem; font-size: 0.9rem;"></div>
 
             <button class="btn" id="uploadBtn" onclick="uploadFiles()">Start Upload</button>
@@ -276,6 +316,62 @@
             } else {
                 albumInputs.classList.add('hidden');
             }
+            updatePickerHints();
+        }
+
+        function updatePickerHints() {
+            const folder = document.getElementById('targetFolder').value;
+            const input = document.getElementById('fileInput');
+            const hint = document.getElementById('dropHint');
+            const sub = document.getElementById('dropSub');
+            if (folder === 'photo') {
+                input.accept = 'image/*,.heic,.heif,image/heic,image/heif';
+                hint.textContent = '點擊選擇照片';
+                sub.textContent = '手機可從相簿選取或拍照；iPhone 的 HEIC 會自動轉成 JPG';
+            } else if (folder === 'bgm') {
+                input.accept = 'audio/mpeg,.mp3,audio/*';
+                hint.textContent = '點擊選擇音樂';
+                sub.textContent = '請選擇 MP3 檔';
+            } else {
+                input.accept = '.html,text/html';
+                hint.textContent = '點擊選擇作品';
+                sub.textContent = '請選擇 HTML 檔';
+            }
+        }
+
+        function isHeicFile(file) {
+            return /\.(heic|heif)$/i.test(file.name) || /image\/hei/i.test(file.type || '');
+        }
+
+        async function convertHeicToJpeg(file) {
+            const bitmap = await createImageBitmap(file);
+            const canvas = document.createElement('canvas');
+            canvas.width = bitmap.width;
+            canvas.height = bitmap.height;
+            canvas.getContext('2d').drawImage(bitmap, 0, 0);
+            bitmap.close && bitmap.close();
+            const blob = await new Promise((resolve, reject) => {
+                canvas.toBlob((result) => result ? resolve(result) : reject(new Error('JPEG 轉換失敗')), 'image/jpeg', 0.9);
+            });
+            const newName = /\.(heic|heif)$/i.test(file.name)
+                ? file.name.replace(/\.(heic|heif)$/i, '.jpg')
+                : `${file.name}.jpg`;
+            return new File([blob], newName, { type: 'image/jpeg' });
+        }
+
+        async function prepareUploadFile(file, folder) {
+            if (folder !== 'photo') return file;
+            if (isHeicFile(file)) {
+                try {
+                    return await convertHeicToJpeg(file);
+                } catch (e) {
+                    throw new Error('iPhone HEIC 無法轉換，請在相簿改存成 JPG 後再上傳');
+                }
+            }
+            if (!/\.(jpg|jpeg|png|gif|webp)$/i.test(file.name) && !(file.type || '').startsWith('image/')) {
+                throw new Error('只支援 jpg / png / gif / webp 圖片');
+            }
+            return file;
         }
 
         function encodeGitHubPath(path) {
@@ -323,7 +419,7 @@
             let successCount = 0;
             let skippedCount = 0;
             let errors = [];
-            
+
             // Determine effective target directory
             let targetDir = folder;
             if (folder === 'photo') {
@@ -336,6 +432,23 @@
                     return;
                 }
                 targetDir = `${folder}/${album}`;
+            }
+
+            const preparedFiles = [];
+            for (const file of files) {
+                try {
+                    preparedFiles.push(await prepareUploadFile(file, folder));
+                } catch (e) {
+                    errors.push(`${file.name}: ${e.message}`);
+                }
+            }
+            if (preparedFiles.length === 0) {
+                btn.disabled = false;
+                btn.textContent = 'Start Upload';
+                statusArea.className = 'status error';
+                statusArea.innerHTML = errors.length ? `Errors:<br>${errors.join('<br>')}` : '沒有可上傳的檔案。';
+                statusArea.style.display = 'block';
+                return;
             }
 
             // Fetch existing files in the target folder to check for duplicates
@@ -366,7 +479,7 @@
 
             // Batch check for duplicates
             let duplicates = [];
-            for (let file of files) {
+            for (let file of preparedFiles) {
                 if (existingFiles.has(file.name)) {
                     duplicates.push(file.name);
                 }
@@ -391,7 +504,7 @@
                 }
             }
  
-            for (let file of files) {
+            for (let file of preparedFiles) {
                 try {
                     let sha = null;
                     
@@ -466,6 +579,22 @@
         // Initialize
         loadConfig();
         toggleAlbumInputs();
+
+        (function setupDragDrop() {
+            const zone = document.querySelector('.file-drop-zone');
+            const input = document.getElementById('fileInput');
+            if (!zone || !input) return;
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (e.dataTransfer && e.dataTransfer.files.length) {
+                    input.files = e.dataTransfer.files;
+                    updateFileList();
+                }
+            });
+        })();
     </script>
 </body>
 </html>
