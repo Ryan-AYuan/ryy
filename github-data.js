@@ -23,11 +23,6 @@ const PROJECT_METADATA = {
         date: "2025-12-30", 
         desc: "A heartfelt wishes page for my ryy."
     },
-    "heart_tree_20260108.html": {
-        title: "💗 Heart Tree 💗",
-        date: "2026-01-08", 
-        desc: "A 3D heart tree animation with interactive controls and particle effects."
-    },
     "heart_particle_3d_20260108.html": {
         title: "💗 Heart Particle 3D 💗",
         date: "2026-01-08", 
