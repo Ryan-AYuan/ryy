@@ -145,6 +145,12 @@ python3 scripts/gh-push.py
 
 Token 只放在 `.env`，不要提交。`.gitignore` 已忽略該檔。
 
+推送時腳本會檢查 Token 是否有效。目前設定到期日為 **2026-12-31**；失效、被撤銷或即將到期時會直接提示。換新 Token 後請同步更新 `.env` 的 `GITHUB_PUSH_TOKEN` 與 `GITHUB_PUSH_TOKEN_EXPIRES`。
+
+```bash
+python3 scripts/gh-push.py --check-token
+```
+
 您可以選擇以下兩種方式來更新網站內容：
 
 ### 方法一：使用上傳工具 (推薦)

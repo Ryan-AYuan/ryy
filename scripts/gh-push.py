@@ -28,6 +28,12 @@ from pathlib import Path
 API = "https://api.github.com"
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 TOKEN_KEYS = ("GITHUB_PUSH_TOKEN", "GITHUB_TOKEN", "GH_TOKEN")
+TOKEN_WARN_DAYS = 14
+TOKEN_RENEW_HINT = (
+    "請到 GitHub → Settings → Developer settings → Fine-grained tokens "
+    "重新建立權杖（Contents: Read and write），更新 .env 的 "
+    "GITHUB_PUSH_TOKEN，並把 GITHUB_PUSH_TOKEN_EXPIRES 改成新的到期日。"
+)
 
 
 def repo_root() -> Path:
@@ -52,6 +58,101 @@ def token_from_env() -> str:
         if value:
             return value
     return ""
+
+
+def parse_expiry_date(value: str) -> datetime | None:
+    text = (value or "").strip()
+    if not text:
+        return None
+    text = text.replace("Z", "+00:00")
+    for fmt in ("%Y-%m-%d", "%Y%m%d", "%Y-%m-%d %H:%M:%S %Z", "%Y-%m-%dT%H:%M:%S%z"):
+        try:
+            parsed = datetime.strptime(text, fmt)
+            if parsed.tzinfo is None:
+                if fmt in ("%Y-%m-%d", "%Y%m%d"):
+                    parsed = parsed.replace(
+                        hour=23, minute=59, second=59,
+                        tzinfo=timezone(timedelta(hours=8)),
+                    )
+                else:
+                    parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed
+        except ValueError:
+            continue
+    match = re.search(r"(\d{4}-\d{2}-\d{2})", text)
+    if match:
+        return parse_expiry_date(match.group(1))
+    return None
+
+
+def configured_expiry() -> datetime | None:
+    return parse_expiry_date(os.environ.get("GITHUB_PUSH_TOKEN_EXPIRES", ""))
+
+
+def github_token_status(token: str) -> tuple[bool, datetime | None, str]:
+    req = urllib.request.Request(
+        f"{API}/rate_limit",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "User-Agent": "ryy-gh-push",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            header = (
+                resp.headers.get("GitHub-Authentication-Token-Expiration")
+                or resp.headers.get("github-authentication-token-expiration")
+                or ""
+            )
+            return True, parse_expiry_date(header), ""
+    except urllib.error.HTTPError as exc:
+        if exc.code in (401, 403):
+            return False, None, "推送 Token 已失效、過期或權限不足。"
+        return False, None, f"無法驗證 Token（HTTP {exc.code}）。"
+    except urllib.error.URLError as exc:
+        return False, None, f"無法驗證 Token（連線失敗: {exc.reason}）。"
+
+
+def report_token_status(token: str) -> int:
+    now = datetime.now(timezone(timedelta(hours=8)))
+    local_expiry = configured_expiry()
+    ok, remote_expiry, error = github_token_status(token)
+
+    if not ok:
+        print(error, file=sys.stderr)
+        print(TOKEN_RENEW_HINT, file=sys.stderr)
+        return 1
+
+    candidates = [item for item in (remote_expiry, local_expiry) if item is not None]
+    if not candidates:
+        print("Token 目前可用，但沒有設定到期日。請在 .env 加上 GITHUB_PUSH_TOKEN_EXPIRES=YYYY-MM-DD。")
+        return 0
+
+    expiry = min(candidates)
+    remaining = (expiry.date() - now.date()).days
+    parts = []
+    if local_expiry:
+        parts.append(f".env 設定 {local_expiry.strftime('%Y-%m-%d')}")
+    if remote_expiry:
+        parts.append(f"GitHub 回報 {remote_expiry.strftime('%Y-%m-%d')}")
+    source = "；".join(parts)
+    expiry_text = expiry.strftime("%Y-%m-%d")
+
+    if remaining < 0:
+        print(f"推送 Token 已於 {expiry_text} 到期（{source}）。", file=sys.stderr)
+        print(TOKEN_RENEW_HINT, file=sys.stderr)
+        return 1
+    if remaining == 0:
+        print(f"警告: 推送 Token 今天到期（{expiry_text}；{source}）。請盡快換新。")
+        print(TOKEN_RENEW_HINT)
+    elif remaining <= TOKEN_WARN_DAYS:
+        print(f"警告: 推送 Token 將於 {expiry_text} 到期，只剩 {remaining} 天（{source}）。")
+        print(TOKEN_RENEW_HINT)
+    else:
+        print(f"Token 有效，最早到期日 {expiry_text}（剩餘 {remaining} 天；{source}）")
+    return 0
 
 
 def git(*args: str, binary: bool = False, check: bool = True):
@@ -170,6 +271,10 @@ class GitHubAPI:
                     return json.loads(raw.decode("utf-8")) if raw else {}
             except urllib.error.HTTPError as exc:
                 err = exc.read().decode("utf-8", "replace")
+                if exc.code in (401, 403):
+                    raise SystemExit(
+                        "推送 Token 已失效、過期或權限不足。\n" + TOKEN_RENEW_HINT
+                    )
                 if exc.code in (429, 502, 503, 504) and attempt < retries:
                     wait = 2 ** attempt
                     print(f"  API {exc.code}，{wait}s 後重試 ({attempt}/{retries})")
@@ -355,6 +460,7 @@ def main() -> int:
     parser.add_argument("--api-only", action="store_true", help="跳過 git push，直接走 API")
     parser.add_argument("--git-only", action="store_true", help="只嘗試 git push")
     parser.add_argument("--timeout", type=int, default=20, help="git push 逾時秒數")
+    parser.add_argument("--check-token", action="store_true", help="只檢查 Token 是否有效與到期日")
     args = parser.parse_args()
 
     root = repo_root()
@@ -363,11 +469,18 @@ def main() -> int:
     token = token_from_env()
     if not token:
         print("找不到 Token。請在 .env 設定 GITHUB_PUSH_TOKEN（可複製 .env.example）。", file=sys.stderr)
+        print(TOKEN_RENEW_HINT, file=sys.stderr)
         return 1
 
     tracked_env = git("ls-files", "--error-unmatch", ".env", check=False)
     if tracked_env.returncode == 0:
         print("警告: .env 已被 git 追蹤，請立刻從版本庫移除，避免 Token 外洩。", file=sys.stderr)
+
+    token_status = report_token_status(token)
+    if args.check_token:
+        return token_status
+    if token_status != 0:
+        return token_status
 
     branch = args.branch or current_branch()
     owner, repo = parse_owner_repo(args.remote)
