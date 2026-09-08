@@ -33,11 +33,19 @@ window.renderGallery = () => {
     albums.forEach(albumId => {
         const album = PHOTO_ALBUMS[albumId];
         const albumSection = document.createElement('div');
-        albumSection.className = 'year-section active';
+        albumSection.className = 'year-section';
 
         const albumTitle = document.createElement('h3');
         albumTitle.className = 'year-title';
-        albumTitle.textContent = album.title;
+        const photos = siteData.photos[albumId];
+        const nameEl = document.createElement('span');
+        nameEl.className = 'album-name';
+        nameEl.textContent = album.title;
+        const countEl = document.createElement('span');
+        countEl.className = 'album-count';
+        countEl.textContent = String(photos.length);
+        albumTitle.appendChild(nameEl);
+        albumTitle.appendChild(countEl);
 
         const albumContent = document.createElement('div');
         albumContent.className = 'year-content';
@@ -45,9 +53,11 @@ window.renderGallery = () => {
         const galleryGrid = document.createElement('div');
         galleryGrid.className = 'gallery-grid';
 
-        siteData.photos[albumId].forEach(photo => {
+        photos.forEach((photo, index) => {
             const item = document.createElement('div');
             item.className = 'gallery-item';
+            item.dataset.albumId = albumId;
+            item.dataset.index = String(index);
 
             const img = document.createElement('img');
             img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
@@ -56,12 +66,7 @@ window.renderGallery = () => {
             img.alt = photo.caption;
             img.className = 'gallery-img';
 
-            const caption = document.createElement('div');
-            caption.className = 'gallery-caption';
-            caption.textContent = photo.caption;
-
             item.appendChild(img);
-            item.appendChild(caption);
             galleryGrid.appendChild(item);
         });
 
@@ -217,15 +222,13 @@ const initLightbox = () => {
         
         currentIndex = index;
         const img = galleryImages[currentIndex];
-        const caption = img.nextElementSibling; // gallery-caption is next sibling
 
-        // Fade out effect
         lightboxImg.style.opacity = 0.5;
         
         setTimeout(() => {
-            lightboxImg.src = img.src;
+            lightboxImg.src = img.src && !img.src.startsWith('data:') ? img.src : (img.dataset.src || img.src);
             lightboxImg.alt = img.alt;
-            lightboxCaption.textContent = caption ? caption.textContent : '';
+            lightboxCaption.textContent = img.alt || '';
             lightboxImg.style.opacity = 1;
             resetZoom();
         }, 150);
@@ -238,8 +241,8 @@ const initLightbox = () => {
             const img = galleryItem.querySelector('img');
             
             if (img) {
-                // Update list of images currently in DOM
-                galleryImages = Array.from(document.querySelectorAll('.gallery-img'));
+                const grid = galleryItem.closest('.gallery-grid');
+                galleryImages = Array.from((grid || document).querySelectorAll('.gallery-img'));
                 currentIndex = galleryImages.indexOf(img);
 
                 updateImage(currentIndex);
@@ -261,6 +264,22 @@ const initLightbox = () => {
 
     nextBtn.addEventListener('click', showNext);
     prevBtn.addEventListener('click', showPrev);
+
+    let touchStartX = 0;
+    let didSwipe = false;
+    lightbox.addEventListener('touchstart', (e) => {
+        if (scale > 1) return;
+        didSwipe = false;
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    lightbox.addEventListener('touchend', (e) => {
+        if (scale > 1) return;
+        const dx = e.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(dx) < 50) return;
+        didSwipe = true;
+        if (dx < 0) showNext();
+        else showPrev();
+    }, { passive: true });
 
     // Close Lightbox
     const closeLightbox = () => {
@@ -291,7 +310,11 @@ const initLightbox = () => {
 
     // Zoom Logic: Click to Toggle
     lightboxImg.addEventListener('click', (e) => {
-        e.stopPropagation(); 
+        e.stopPropagation();
+        if (didSwipe) {
+            didSwipe = false;
+            return;
+        }
         if (scale === 1) {
             scale = 2.5;
             lightboxImg.style.cursor = 'grab';

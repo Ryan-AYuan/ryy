@@ -145,6 +145,8 @@ python3 scripts/gh-push.py
 
 Token 只放在 `.env`，不要提交。`.gitignore` 已忽略該檔。
 
+上傳頁可用家庭碼 `9777` 或 `2347` 代替完整 Token。若原始 Token 過期，頁面會顯示「憑證過期，請聯繫管理員」。換新 Token 後請執行 `node scripts/build-upload-auth.mjs` 再推送，家庭碼才會對應新憑證。
+
 推送時腳本會檢查 Token 是否有效。目前設定到期日為 **2026-12-31**；失效、被撤銷或即將到期時會直接提示。換新 Token 後請同步更新 `.env` 的 `GITHUB_PUSH_TOKEN` 與 `GITHUB_PUSH_TOKEN_EXPIRES`。
 
 ```bash
