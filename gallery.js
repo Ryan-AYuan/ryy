@@ -26,63 +26,49 @@ window.renderGallery = () => {
     container.innerHTML = '';
     if (title) container.appendChild(title);
 
-    // Sort years descending
-    const years = Object.keys(siteData.photos).sort((a, b) => b - a);
+    const albums = Object.keys(typeof PHOTO_ALBUMS !== 'undefined' ? PHOTO_ALBUMS : {})
+        .sort((a, b) => PHOTO_ALBUMS[a].order - PHOTO_ALBUMS[b].order)
+        .filter(id => Array.isArray(siteData.photos[id]) && siteData.photos[id].length > 0);
 
-    years.forEach(year => {
-        const yearSection = document.createElement('div');
-        yearSection.className = 'year-section'; // Default collapsed
+    albums.forEach(albumId => {
+        const album = PHOTO_ALBUMS[albumId];
+        const albumSection = document.createElement('div');
+        albumSection.className = 'year-section active';
 
-        const yearTitle = document.createElement('h3');
-        yearTitle.className = 'year-title';
-        yearTitle.textContent = year;
-        
-        const yearContent = document.createElement('div');
-        yearContent.className = 'year-content';
+        const albumTitle = document.createElement('h3');
+        albumTitle.className = 'year-title';
+        albumTitle.textContent = album.title;
 
-        // Month sorting helper
-        const monthOrder = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        const months = Object.keys(siteData.photos[year]);
-        months.sort((a, b) => monthOrder.indexOf(b) - monthOrder.indexOf(a)); // Descending
+        const albumContent = document.createElement('div');
+        albumContent.className = 'year-content';
 
-        months.forEach(month => {
-            const monthSection = document.createElement('div');
-            monthSection.className = 'month-section'; // Default collapsed
+        const galleryGrid = document.createElement('div');
+        galleryGrid.className = 'gallery-grid';
 
-            const monthTitleEl = document.createElement('h4');
-            monthTitleEl.className = 'month-title';
-            monthTitleEl.textContent = month;
+        siteData.photos[albumId].forEach(photo => {
+            const item = document.createElement('div');
+            item.className = 'gallery-item';
 
-            const monthContent = document.createElement('div');
-            monthContent.className = 'month-content';
+            const img = document.createElement('img');
+            img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            img.dataset.src = photo.src;
+            img.dataset.blobUrl = photo.blobUrl || '';
+            img.alt = photo.caption;
+            img.className = 'gallery-img';
 
-            const galleryGrid = document.createElement('div');
-            galleryGrid.className = 'gallery-grid';
+            const caption = document.createElement('div');
+            caption.className = 'gallery-caption';
+            caption.textContent = photo.caption;
 
-            siteData.photos[year][month].forEach(photo => {
-                const item = document.createElement('div');
-                item.className = 'gallery-item';
-                // Use data-src for lazy authenticated loading
-                item.innerHTML = `
-                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" 
-                            data-src="${photo.src}" 
-                            data-blob-url="${photo.blobUrl}"
-                            alt="${photo.caption}" 
-                            class="gallery-img">
-                    <div class="gallery-caption">${photo.caption}</div>
-                `;
-                galleryGrid.appendChild(item);
-            });
-
-            monthContent.appendChild(galleryGrid);
-            monthSection.appendChild(monthTitleEl);
-            monthSection.appendChild(monthContent);
-            yearContent.appendChild(monthSection);
+            item.appendChild(img);
+            item.appendChild(caption);
+            galleryGrid.appendChild(item);
         });
 
-        yearSection.appendChild(yearTitle);
-        yearSection.appendChild(yearContent);
-        container.appendChild(yearSection);
+        albumContent.appendChild(galleryGrid);
+        albumSection.appendChild(albumTitle);
+        albumSection.appendChild(albumContent);
+        container.appendChild(albumSection);
     });
 };
 

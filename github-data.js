@@ -41,6 +41,13 @@ const PROJECT_METADATA = {
     // Add more files here as needed:
 };
 
+// Only these albums under photo/ are shown on the site.
+// Other folders (e.g. photo/2025, photo/2026) are ignored.
+const PHOTO_ALBUMS = {
+    'moments_of_love': { title: 'Moments of Love', order: 0 },
+    'forever&3k': { title: 'Forever & 3k', order: 1 }
+};
+
 // Global siteData object (initially empty)
 var siteData = {
     projects: [],
@@ -133,43 +140,30 @@ async function fetchGitHubData() {
                 });
             }
 
-            // 2. Photos (in photo/YEAR/MONTH/ folder)
-            // Expected path: photo/2025/12/image.jpg
+            // 2. Photos (in photo/{album}/ folder)
+            // Expected path: photo/moments_of_love/image.jpg
             else if (path.startsWith('photo/')) {
                 const parts = path.split('/');
-                if (parts.length >= 4) {
-                    const year = parts[1];
-                    const month = parts[2]; // e.g., "12" or "December"
-                    const filename = parts[parts.length - 1];
-                    
-                    // Filter images
-                    if (!filename.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return;
+                if (parts.length !== 3) return;
 
-                    if (!siteData.photos[year]) siteData.photos[year] = {};
-                    
-                    // Normalize month? If it's number "01", keep it or convert to name.
-                    // The UI expects names like "January" or just keys. 
-                    // Let's try to map "01" -> "January" if possible, or just use what is there.
-                    // The existing data.js used "December", "January".
-                    // If the folder is "12", we might want to convert.
-                    let monthName = month;
-                    if (/^\d+$/.test(month)) {
-                        const date = new Date(2000, parseInt(month) - 1, 1);
-                        monthName = date.toLocaleString('en-US', { month: 'long' });
-                    }
+                const albumId = parts[1];
+                const filename = parts[2];
+                const album = PHOTO_ALBUMS[albumId];
+                if (!album) return;
+                if (!filename.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return;
 
-                    if (!siteData.photos[year][monthName]) siteData.photos[year][monthName] = [];
+                if (!siteData.photos[albumId]) siteData.photos[albumId] = [];
 
-                    // Construct Raw GitHub URL to ensure images load even if running locally (and file is only on cloud)
-                    // Encode path parts to handle spaces/special chars
-                    const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path.split('/').map(encodeURIComponent).join('/')}`;
+                // Construct Raw GitHub URL to ensure images load even if running locally (and file is only on cloud)
+                // Encode path parts to handle spaces/special chars (e.g. &)
+                const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path.split('/').map(encodeURIComponent).join('/')}`;
 
-                    siteData.photos[year][monthName].push({
-                        src: rawUrl,
-                        blobUrl: item.url, // Store API Blob URL for private repo access
-                        caption: `${monthName} ${year} - ${formatTitle(filename)}`
-                    });
-                }
+                siteData.photos[albumId].push({
+                    src: rawUrl,
+                    blobUrl: item.url, // Store API Blob URL for private repo access
+                    caption: album.title,
+                    filename: filename
+                });
             }
 
             // 3. Music (in bgm/ folder)
@@ -187,6 +181,11 @@ async function fetchGitHubData() {
 
         // Sort Projects by date desc
         siteData.projects.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Sort photos in each album by filename
+        Object.keys(siteData.photos).forEach(albumId => {
+            siteData.photos[albumId].sort((a, b) => a.filename.localeCompare(b.filename, 'en'));
+        });
 
         console.log("Data loaded successfully:", siteData);
         

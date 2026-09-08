@@ -212,33 +212,19 @@
 
             <div class="form-group">
                 <label>Target Folder</label>
-                <select id="targetFolder" onchange="toggleDateInputs()">
+                <select id="targetFolder" onchange="toggleAlbumInputs()">
                     <option value="bgm">BGM (Music)</option>
                     <option value="code">Code</option>
                     <option value="photo">Photo</option>
                 </select>
             </div>
 
-            <div id="dateInputs" class="hidden date-row">
+            <div id="albumInputs" class="hidden">
                 <div class="form-group">
-                    <label>Year</label>
-                    <input type="number" id="uploadYear" placeholder="YYYY">
-                </div>
-                <div class="form-group">
-                    <label>Month</label>
-                    <select id="uploadMonth">
-                        <option value="01">January (01)</option>
-                        <option value="02">February (02)</option>
-                        <option value="03">March (03)</option>
-                        <option value="04">April (04)</option>
-                        <option value="05">May (05)</option>
-                        <option value="06">June (06)</option>
-                        <option value="07">July (07)</option>
-                        <option value="08">August (08)</option>
-                        <option value="09">September (09)</option>
-                        <option value="10">October (10)</option>
-                        <option value="11">November (11)</option>
-                        <option value="12">December (12)</option>
+                    <label>Album</label>
+                    <select id="uploadAlbum">
+                        <option value="moments_of_love">Moments of Love</option>
+                        <option value="forever&amp;3k">Forever &amp; 3k</option>
                     </select>
                 </div>
             </div>
@@ -282,21 +268,18 @@
             document.getElementById('configSection').classList.toggle('hidden');
         }
 
-        function toggleDateInputs() {
+        function toggleAlbumInputs() {
             const folder = document.getElementById('targetFolder').value;
-            const dateInputs = document.getElementById('dateInputs');
+            const albumInputs = document.getElementById('albumInputs');
             if (folder === 'photo') {
-                dateInputs.classList.remove('hidden');
+                albumInputs.classList.remove('hidden');
             } else {
-                dateInputs.classList.add('hidden');
+                albumInputs.classList.add('hidden');
             }
         }
 
-        function initDateInputs() {
-            const now = new Date();
-            document.getElementById('uploadYear').value = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            document.getElementById('uploadMonth').value = month;
+        function encodeGitHubPath(path) {
+            return path.split('/').map(encodeURIComponent).join('/');
         }
 
         function updateFileList() {
@@ -344,13 +327,19 @@
             // Determine effective target directory
             let targetDir = folder;
             if (folder === 'photo') {
-                const year = document.getElementById('uploadYear').value;
-                const month = document.getElementById('uploadMonth').value;
-                targetDir = `${folder}/${year}/${month}`;
+                const album = document.getElementById('uploadAlbum').value;
+                if (!album) {
+                    statusArea.className = 'status error';
+                    statusArea.textContent = 'Please select an album.';
+                    btn.disabled = false;
+                    btn.textContent = 'Start Upload';
+                    return;
+                }
+                targetDir = `${folder}/${album}`;
             }
 
             // Fetch existing files in the target folder to check for duplicates
-            const dirUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${targetDir}?ref=${branch}`;
+            const dirUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeGitHubPath(targetDir)}?ref=${branch}`;
             let existingFiles = new Map(); // filename -> sha
 
             try {
@@ -411,7 +400,7 @@
                     }
  
                     const content = await readFileAsBase64(file);
-                    let targetPath = `${targetDir}/${encodeURIComponent(file.name)}`;
+                    let targetPath = encodeGitHubPath(`${targetDir}/${file.name}`);
                     
                     // Upload
                     const uploadUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${targetPath}`;
@@ -476,7 +465,7 @@
 
         // Initialize
         loadConfig();
-        initDateInputs();
+        toggleAlbumInputs();
     </script>
 </body>
 </html>
