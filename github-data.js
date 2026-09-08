@@ -41,7 +41,8 @@ const PROJECT_METADATA = {
 const PHOTO_ALBUMS = {
     'moments_of_love': { title: 'Moments of Love', order: 0 },
     'forever&3k': { title: 'Forever & 3k', order: 1 },
-    'weekend': { title: 'Weekend', order: 2 }
+    'weekend': { title: 'Weekend', order: 2 },
+    'food': { title: 'Food', order: 3 }
 };
 
 // Global siteData object (initially empty)
