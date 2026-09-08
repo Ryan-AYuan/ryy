@@ -247,29 +247,15 @@
         <a href="https://ryan-ayuan.github.io/ryy/" class="back-link">← Back to Home</a>
         
         <div class="upload-card">
-            <div class="toggle-config" onclick="toggleConfig()">⚙️ Configure GitHub Settings</div>
-            <p id="tokenSavedHint" class="token-hint hidden">已使用預設設定，可直接選擇檔案上傳。一般不需要再填 Token / Owner / Repo。</p>
             <p id="tokenExpiredHint" class="token-hint error hidden">憑證過期，請聯繫管理員。</p>
-            
-            <div id="configSection" class="config-section hidden">
-                <div class="form-group">
-                    <label>家庭碼或 GitHub Token</label>
-                    <input type="password" id="ghToken" placeholder="例如 9777 / 2347">
-                </div>
-                <div class="form-group">
-                    <label>Owner (Username)</label>
-                    <input type="text" id="ghOwner" value="Ryan-AYuan">
-                </div>
-                <div class="form-group">
-                    <label>Repository Name</label>
-                    <input type="text" id="ghRepo" value="ryy">
-                </div>
-                <div class="form-group">
-                    <label>Branch</label>
-                    <input type="text" id="ghBranch" value="main">
-                </div>
-                <button class="btn" onclick="saveConfig()" style="width: auto; padding: 8px 20px; font-size: 1rem;">Save Settings</button>
+
+            <div class="form-group">
+                <label>家庭碼或 GitHub Token</label>
+                <input type="password" id="ghToken" placeholder="請輸入家庭碼" autocomplete="off">
             </div>
+            <input type="hidden" id="ghOwner" value="Ryan-AYuan">
+            <input type="hidden" id="ghRepo" value="ryy">
+            <input type="hidden" id="ghBranch" value="main">
 
             <div class="form-group">
                 <label>Target Folder</label>
@@ -343,7 +329,8 @@
         }
 
         async function resolveGitHubToken(input) {
-            const value = (input || '').trim() || DEFAULT_UPLOAD.alias;
+            const value = (input || '').trim();
+            if (!value) throw new Error('請填寫家庭碼或 GitHub Token');
             if (/^(ghp_|github_pat_)/.test(value)) return value;
             const vault = (window.UPLOAD_AUTH && window.UPLOAD_AUTH.vault) || {};
             const pack = vault[value];
@@ -392,62 +379,21 @@
             return token;
         }
 
-        function storedOrDefault(key, fallback) {
-            const value = (localStorage.getItem(key) || '').trim();
-            return value || fallback;
-        }
-
-        // Load config from localStorage
         function loadConfig() {
-            const ownerInput = document.getElementById('ghOwner');
-            const repoInput = document.getElementById('ghRepo');
-            const branchInput = document.getElementById('ghBranch');
-            const tokenInput = document.getElementById('ghToken');
-            tokenInput.value = storedOrDefault('gh_token', DEFAULT_UPLOAD.alias);
-            ownerInput.value = storedOrDefault('gh_owner', DEFAULT_UPLOAD.owner);
-            repoInput.value = storedOrDefault('gh_repo', DEFAULT_UPLOAD.repo);
-            branchInput.value = storedOrDefault('gh_branch', DEFAULT_UPLOAD.branch);
-            persistConfig(false);
-            updateTokenHint();
-            document.getElementById('configSection').classList.add('hidden');
-            checkSavedCredential();
-        }
-
-        async function checkSavedCredential() {
-            try {
-                await resolveAndVerifyToken();
-            } catch (e) {
-                if (String(e.message) === TOKEN_EXPIRED_MSG) {
-                    showExpiredHint(true);
-                    document.getElementById('configSection').classList.remove('hidden');
-                }
+            const leftover = (localStorage.getItem('gh_token') || '').trim();
+            if (leftover && !/^(ghp_|github_pat_)/.test(leftover)) {
+                localStorage.removeItem('gh_token');
             }
+            document.getElementById('ghOwner').value = DEFAULT_UPLOAD.owner;
+            document.getElementById('ghRepo').value = DEFAULT_UPLOAD.repo;
+            document.getElementById('ghBranch').value = DEFAULT_UPLOAD.branch;
+            document.getElementById('ghToken').value = '';
         }
 
-        function persistConfig(showAlert) {
-            localStorage.setItem('gh_token', document.getElementById('ghToken').value.trim());
-            localStorage.setItem('gh_owner', document.getElementById('ghOwner').value.trim() || 'Ryan-AYuan');
-            localStorage.setItem('gh_repo', document.getElementById('ghRepo').value.trim() || 'ryy');
-            localStorage.setItem('gh_branch', document.getElementById('ghBranch').value.trim() || 'main');
-            updateTokenHint();
-            if (showAlert) {
-                alert('Settings saved! 之後可直接上傳。');
-                document.getElementById('configSection').classList.add('hidden');
-            }
-        }
-
-        function saveConfig() {
-            persistConfig(true);
-        }
-
-        function updateTokenHint() {
-            const hint = document.getElementById('tokenSavedHint');
-            if (!hint) return;
-            hint.classList.remove('hidden');
-        }
-
-        function toggleConfig() {
-            document.getElementById('configSection').classList.toggle('hidden');
+        function persistConfig() {
+            localStorage.setItem('gh_owner', DEFAULT_UPLOAD.owner);
+            localStorage.setItem('gh_repo', DEFAULT_UPLOAD.repo);
+            localStorage.setItem('gh_branch', DEFAULT_UPLOAD.branch);
         }
 
         function toggleAlbumInputs() {
@@ -547,12 +493,11 @@
                 statusArea.className = 'status error';
                 statusArea.textContent = e.message;
                 statusArea.style.display = 'block';
-                document.getElementById('configSection').classList.remove('hidden');
                 if (String(e.message) === TOKEN_EXPIRED_MSG) showExpiredHint(true);
                 return;
             }
 
-            persistConfig(false);
+            persistConfig();
 
             if (files.length === 0) {
                 statusArea.className = 'status error';
@@ -730,10 +675,6 @@
         // Initialize
         loadConfig();
         toggleAlbumInputs();
-        document.getElementById('ghToken').addEventListener('change', () => persistConfig(false));
-        document.getElementById('ghOwner').addEventListener('change', () => persistConfig(false));
-        document.getElementById('ghRepo').addEventListener('change', () => persistConfig(false));
-        document.getElementById('ghBranch').addEventListener('change', () => persistConfig(false));
 
         (function setupDragDrop() {
             const zone = document.querySelector('.file-drop-zone');
