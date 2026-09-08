@@ -40,7 +40,8 @@ const PROJECT_METADATA = {
 // Other folders (e.g. photo/2025, photo/2026) are ignored.
 const PHOTO_ALBUMS = {
     'moments_of_love': { title: 'Moments of Love', order: 0 },
-    'forever&3k': { title: 'Forever & 3k', order: 1 }
+    'forever&3k': { title: 'Forever & 3k', order: 1 },
+    'weekend': { title: 'Weekend', order: 2 }
 };
 
 // Global siteData object (initially empty)
